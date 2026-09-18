@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     hasStamp: false,
     branchChoice: 'market',
     userVote: null,
-    ghostAffinity: 0
+    ghostAffinity: 0,
+    footstepProgress: 0
   };
 
   let cameraStream = null;
@@ -40,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const stageTitles = {
     1: '1단계 / 마을 입구',
     2: '2단계 / 첫 번째 빈집 (카메라 AR)',
-    3: '3단계 / 마을 골목길',
+    3: '3단계 / 마을 골목길 (바닥 AR 발자국)',
     4: '4단계 / 두 번째 빈집',
     5: '5단계 / 지역 상권 연계',
     6: '6단계 / 마지막 빈집',
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     stepperLabel.textContent = stageTitles[state.currentStage] || `${state.currentStage}단계`;
     inventorySummary.textContent = `수집 편지 ${state.collectedLetters}/3 · 스탬프 ${state.hasStamp ? '1개' : '0개'}`;
 
-    // Update On-Camera Affinity HUD
+    // Stage 2 Affinity HUD
     const camAffinityText = document.getElementById('cam-affinity-text');
     const camAffinityFill = document.getElementById('cam-affinity-fill');
     const btnNextStage2 = document.getElementById('btn-next-stage-2');
@@ -89,9 +90,58 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Stage 3 Footstep Progress HUD
+    const footstepCountText = document.getElementById('footstep-count-text');
+    const footstepFillBar = document.getElementById('footstep-fill-bar');
+    const btnNextStage3 = document.getElementById('btn-next-stage-3');
+    const stage3Reward = document.getElementById('stage-3-reward');
+
+    if (footstepCountText && footstepFillBar) {
+      const pct = Math.round((state.footstepProgress / 3) * 100);
+      footstepCountText.textContent = `${state.footstepProgress} / 3 걸음`;
+      footstepFillBar.style.width = `${pct}%`;
+    }
+
+    if (btnNextStage3) {
+      if (state.footstepProgress >= 3) {
+        btnNextStage3.removeAttribute('disabled');
+        btnNextStage3.querySelector('span').textContent = '두 번째 빈집으로 진입';
+        if (stage3Reward) stage3Reward.classList.remove('hidden');
+      } else {
+        btnNextStage3.setAttribute('disabled', 'true');
+        btnNextStage3.querySelector('span').textContent = `발자국을 모두 따라가고 다음으로 이동 (${state.footstepProgress}/3)`;
+      }
+    }
+
+    // Update Footprint nodes visual state
+    for (let i = 1; i <= 3; i++) {
+      const node = document.getElementById(`footprint-${i}`);
+      if (node) {
+        if (i <= state.footstepProgress) {
+          node.classList.remove('locked');
+          node.classList.add('stepped');
+        } else if (i === state.footstepProgress + 1) {
+          node.classList.remove('locked');
+        } else {
+          node.classList.add('locked');
+        }
+      }
+    }
+    const destNode = document.getElementById('footprint-4');
+    if (destNode) {
+      if (state.footstepProgress >= 3) {
+        destNode.classList.remove('locked');
+        destNode.classList.add('stepped');
+      } else {
+        destNode.classList.add('locked');
+      }
+    }
+
     // Camera Management
     if (state.currentStage === 2) {
-      startLiveCamera();
+      startLiveCamera('live-camera-video-2');
+    } else if (state.currentStage === 3) {
+      startLiveCamera('live-camera-video-3');
     } else {
       stopLiveCamera();
     }
@@ -164,34 +214,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 4. Stage 2 Logic (LIVE CAMERA AR + ON-CAMERA AFFINITY INTERACTION)
-  const liveCameraVideo = document.getElementById('live-camera-video');
-  const viewerStage2 = document.getElementById('viewer-stage-2');
-  const camSpeechText = document.getElementById('cam-speech-text');
-  const particleContainer = document.getElementById('particle-container');
-  const btnCamPet = document.getElementById('btn-cam-pet');
-  const btnCamFeed = document.getElementById('btn-cam-feed');
-  const btnCamVoice = document.getElementById('btn-cam-voice');
-  const btnCamToggle = document.getElementById('btn-cam-toggle');
-  const camToggleText = document.getElementById('cam-toggle-text');
-  const btnNextStage2 = document.getElementById('btn-next-stage-2');
-
-  async function startLiveCamera() {
-    if (cameraStream) return;
+  // 4. Camera Stream Utility
+  async function startLiveCamera(videoId) {
+    if (cameraStream) {
+      const vid = document.getElementById(videoId);
+      if (vid && vid.srcObject !== cameraStream) {
+        vid.srcObject = cameraStream;
+        vid.play().catch(() => {});
+      }
+      return;
+    }
     try {
       const constraints = {
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
       };
       cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-      if (liveCameraVideo) {
-        liveCameraVideo.srcObject = cameraStream;
-        await liveCameraVideo.play();
-        if (camToggleText) camToggleText.textContent = '실시간 카메라 켜짐';
+      const vid = document.getElementById(videoId);
+      if (vid) {
+        vid.srcObject = cameraStream;
+        await vid.play();
       }
     } catch (err) {
       console.warn('Camera access denied or unavailable:', err);
-      if (camToggleText) camToggleText.textContent = '가상 AR 모드 활성화';
     }
   }
 
@@ -202,50 +247,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (btnCamToggle) {
-    btnCamToggle.addEventListener('click', () => {
-      if (cameraStream) {
-        stopLiveCamera();
-        if (camToggleText) camToggleText.textContent = '카메라 켜기';
-      } else {
-        startLiveCamera();
-      }
-    });
-  }
+  // 5. Stage 2 Logic (LIVE CAMERA AR + ON-CAMERA AFFINITY INTERACTION)
+  const viewerStage2 = document.getElementById('viewer-stage-2');
+  const camSpeechText = document.getElementById('cam-speech-text');
+  const particleContainer2 = document.getElementById('particle-container-2');
+  const btnCamPet = document.getElementById('btn-cam-pet');
+  const btnCamFeed = document.getElementById('btn-cam-feed');
+  const btnCamVoice = document.getElementById('btn-cam-voice');
+  const btnNextStage2 = document.getElementById('btn-next-stage-2');
 
-  // Particle Emitter (Hearts / Stars floating over camera screen)
-  function spawnParticle(emoji) {
-    if (!particleContainer) return;
+  function spawnParticle(container, emoji) {
+    if (!container) return;
     const particle = document.createElement('div');
     particle.className = 'floating-particle';
     particle.textContent = emoji;
-    
-    // Random position around center
-    const x = 40 + Math.random() * 20; // 40% ~ 60%
-    const y = 45 + Math.random() * 15; // 45% ~ 60%
+    const x = 40 + Math.random() * 20;
+    const y = 45 + Math.random() * 15;
     particle.style.left = `${x}%`;
     particle.style.top = `${y}%`;
-    
-    particleContainer.appendChild(particle);
+    container.appendChild(particle);
     setTimeout(() => {
-      if (particle.parentNode) {
-        particle.parentNode.removeChild(particle);
-      }
+      if (particle.parentNode) particle.parentNode.removeChild(particle);
     }, 1200);
   }
 
   function addAffinity(amount, dialogText, emoji = '❤️') {
     state.ghostAffinity = Math.min(100, state.ghostAffinity + amount);
-    if (camSpeechText) {
-      camSpeechText.textContent = dialogText;
-    }
+    if (camSpeechText) camSpeechText.textContent = dialogText;
     playDocent(dialogText);
 
-    // Spawn animated floating particles on camera
-    spawnParticle(emoji);
-    spawnParticle(emoji);
+    spawnParticle(particleContainer2, emoji);
+    spawnParticle(particleContainer2, emoji);
 
-    // Jiggle model viewer camera orbit
     if (viewerStage2) {
       viewerStage2.cameraOrbit = `${Math.random() * 50 - 25}deg 75deg 2.5m`;
     }
@@ -257,21 +290,19 @@ document.addEventListener('DOMContentLoaded', () => {
           camSpeechText.textContent = `"와아! 친밀도 100% 달성! 우체부 아저씨의 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!"`;
         }
         playDocent("와아! 친밀도 100% 달성! 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!");
-        spawnParticle('🎉');
-        spawnParticle('✉️');
+        spawnParticle(particleContainer2, '🎉');
+        spawnParticle(particleContainer2, '✉️');
       }, 700);
     }
     saveState();
   }
 
-  // Direct Touch on 3D Ghost Viewer Layer
   if (viewerStage2) {
     viewerStage2.addEventListener('click', () => {
       addAffinity(35, `"간지러워요! 히히~ 카메라 너머로 여러분의 손길이 느껴져요!"`, '✨');
     });
   }
 
-  // Camera Action Buttons
   if (btnCamPet) {
     btnCamPet.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -295,25 +326,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnNextStage2) {
     btnNextStage2.addEventListener('click', () => {
-      stopLiveCamera();
       state.currentStage = 3;
       saveState();
       playDocent("골목길 바닥을 비춰 우체부의 옛 발자국을 따라가세요.");
     });
   }
 
-  // 5. Stage 3 Logic (Alley Tracking)
+  // 6. Stage 3 Logic (FLOOR AR FOOTPRINTS & CLUE DISCOVERY)
+  const floorHintText = document.getElementById('floor-hint-text');
+  const btnStepForward = document.getElementById('btn-step-forward');
   const btnNextStage3 = document.getElementById('btn-next-stage-3');
+
+  const footprintClues = [
+    "바닥 단서 1: 바닥에서 1978년 승평우체국 소인이 찍힌 낡은 우표 조각 발견!",
+    "바닥 단서 2: '빨간 대문 앞 돌담 틈새를 확인하라'는 우체부의 옛 메모 발견!",
+    "목적지 도착! 빨간 대문 우편함에서 두 번째 편지 조각을 찾았습니다!"
+  ];
+
+  function stepFootprint(stepNum) {
+    if (stepNum > state.footstepProgress + 1) return;
+    if (state.footstepProgress >= 3) return;
+
+    state.footstepProgress = Math.min(3, state.footstepProgress + 1);
+    const clueText = footprintClues[state.footstepProgress - 1];
+    
+    if (floorHintText) floorHintText.textContent = clueText;
+    playDocent(clueText);
+
+    if (state.footstepProgress >= 3) {
+      state.collectedLetters = Math.max(2, state.collectedLetters);
+    }
+    saveState();
+  }
+
+  // Click on footprint nodes
+  for (let i = 1; i <= 3; i++) {
+    const node = document.getElementById(`footprint-${i}`);
+    if (node) {
+      node.addEventListener('click', () => stepFootprint(i));
+    }
+  }
+
+  if (btnStepForward) {
+    btnStepForward.addEventListener('click', () => {
+      stepFootprint(state.footstepProgress + 1);
+    });
+  }
+
   if (btnNextStage3) {
     btnNextStage3.addEventListener('click', () => {
       state.currentStage = 4;
-      state.collectedLetters = Math.max(2, state.collectedLetters);
       saveState();
       playDocent("두 번째 빈집에 도착했습니다. 우체부가 향했던 길을 선택해 주세요.");
     });
   }
 
-  // 6. Stage 4 Logic (Branch Selection)
+  // 7. Stage 4 Logic (Branch Selection)
   const btnChoiceMarket = document.getElementById('btn-choice-market');
   const btnChoiceSchool = document.getElementById('btn-choice-school');
 
@@ -339,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 7. Stage 5 Logic (Shop & Discount Coupon)
+  // 8. Stage 5 Logic (Shop & Discount Coupon)
   const btnNextStage5 = document.getElementById('btn-next-stage-5');
   if (btnNextStage5) {
     btnNextStage5.addEventListener('click', () => {
@@ -349,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 8. Stage 6 Logic (Restored Letter Climax)
+  // 9. Stage 6 Logic (Restored Letter Climax)
   const btnNextStage6 = document.getElementById('btn-next-stage-6');
   if (btnNextStage6) {
     btnNextStage6.addEventListener('click', () => {
@@ -359,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 9. Stage 7 Logic (Voting & Realtime Charts)
+  // 10. Stage 7 Logic (Voting & Realtime Charts)
   const voteOptionBtns = document.querySelectorAll('.vote-option-btn');
   const btnSubmitVote = document.getElementById('btn-submit-vote');
   const votingContainer = document.getElementById('voting-container');
@@ -413,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 10. Restart Quest Button
+  // 11. Restart Quest Button
   const btnRestartQuest = document.getElementById('btn-restart-quest');
   if (btnRestartQuest) {
     btnRestartQuest.addEventListener('click', () => {
@@ -429,14 +497,15 @@ document.addEventListener('DOMContentLoaded', () => {
           hasStamp: false,
           branchChoice: 'market',
           userVote: null,
-          ghostAffinity: 0
+          ghostAffinity: 0,
+          footstepProgress: 0
         };
         saveState();
       }
     });
   }
 
-  // 11. Speech Synthesis (Docent Narrator)
+  // 12. Speech Synthesis
   function playDocent(text) {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -447,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 12. Host QR Poster Modal
+  // 13. Host QR Poster Modal
   const btnQrPoster = document.getElementById('btn-qr-poster');
   const qrModal = document.getElementById('qr-modal');
   const btnCloseModal = document.getElementById('btn-close-modal');
