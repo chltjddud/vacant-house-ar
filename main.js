@@ -1,152 +1,351 @@
 import QRCode from 'qrcode';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const arViewer = document.getElementById('ar-viewer');
-  const exhibitCards = document.querySelectorAll('.exhibit-card');
-  const docentTitle = document.getElementById('docent-title');
-  const docentDesc = document.getElementById('docent-desc');
-  const btnCollectClue = document.getElementById('btn-collect-clue');
-  const btnPlayDocent = document.getElementById('btn-play-docent');
-  const clueProgressText = document.getElementById('clue-progress-text');
-  
-  const escapeModal = document.getElementById('escape-modal');
-  const btnCloseEscape = document.getElementById('btn-close-escape');
+  // 1. Quest State & LocalStorage
+  const STORAGE_KEY = 'seungpyeong_ar_quest_state_v1';
+  let state = {
+    currentStage: 1,
+    companion: '가족 (어린이 포함)',
+    theme: '모험·추리',
+    time: '90분 코스',
+    collectedLetters: 0,
+    hasStamp: false,
+    branchChoice: 'market',
+    userVote: null
+  };
 
-  const btnQrModal = document.getElementById('btn-qr-modal');
-  const btnCloseModal = document.getElementById('btn-close-modal');
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      state = { ...state, ...JSON.parse(saved) };
+    } catch (e) {
+      console.error('Failed to load saved quest state', e);
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    updateUI();
+  }
+
+  // 2. Stage Elements
+  const stages = document.querySelectorAll('.quest-stage');
+  const stepDots = document.querySelectorAll('.step-dot');
+  const stepperLabel = document.getElementById('stepper-label');
+  const inventorySummary = document.getElementById('inventory-summary');
+
+  const stageTitles = {
+    1: '1단계 / 마을 입구',
+    2: '2단계 / 첫 번째 빈집',
+    3: '3단계 / 마을 골목길',
+    4: '4단계 / 두 번째 빈집',
+    5: '5단계 / 지역 상권 연계',
+    6: '6단계 / 마지막 빈집',
+    7: '7단계 / 에필로그 & 미래'
+  };
+
+  function updateUI() {
+    // Stage Visibility
+    stages.forEach(s => s.classList.remove('active'));
+    const currentSection = document.getElementById(`stage-${state.currentStage}`);
+    if (currentSection) {
+      currentSection.classList.add('active');
+    }
+
+    // Stepper Dots
+    stepDots.forEach(dot => {
+      const stepNum = parseInt(dot.dataset.step, 10);
+      dot.classList.remove('active', 'completed');
+      if (stepNum === state.currentStage) {
+        dot.classList.add('active');
+      } else if (stepNum < state.currentStage) {
+        dot.classList.add('completed');
+      }
+    });
+
+    // Top Label
+    stepperLabel.textContent = stageTitles[state.currentStage] || `${state.currentStage}단계`;
+    inventorySummary.textContent = `수집 편지 ${state.collectedLetters}/3 · 스탬프 ${state.hasStamp ? '1개' : '0개'}`;
+
+    // Dynamic Branch Content for Stage 5
+    const stage5Title = document.getElementById('stage-5-title');
+    const stage5Desc = document.getElementById('stage-5-desc');
+    const couponStoreName = document.getElementById('coupon-store-name');
+
+    if (state.branchChoice === 'market') {
+      if (stage5Title) stage5Title.textContent = '승평 전통 오일장 사랑방 카페';
+      if (stage5Desc) stage5Desc.textContent = '시장 어귀에 위치한 마을 카페에 방문했습니다. 카운터에서 스탬프를 확인하고 실물 할인 혜택을 이용하세요!';
+      if (couponStoreName) couponStoreName.textContent = '승평 사랑방 카페 음료 1,000원 할인권';
+    } else {
+      if (stage5Title) stage5Title.textContent = '옛 분교 추억의 베이커리 쉼터';
+      if (stage5Desc) stage5Desc.textContent = '아이들 웃음소리가 머물던 분교 쉼터에 방문했습니다. 카운터에서 스탬프를 확인하고 따뜻한 간식 혜택을 이용하세요!';
+      if (couponStoreName) couponStoreName.textContent = '옛 분교 베이커리 쉼터 음료 1,000원 할인권';
+    }
+
+    // Dynamic Letter Body for Stage 6
+    const finalLetterBody = document.getElementById('final-letter-body');
+    if (finalLetterBody) {
+      if (state.branchChoice === 'market') {
+        finalLetterBody.innerHTML = `
+          "친애하는 영희에게.<br><br>
+          승평마을의 가을은 유난히 따뜻했단다. 북적이는 오일장 시장 골목마다 서로의 안부를 묻던 이웃들의 정, 마당에서 함께 음식을 나누던 이 집에서 우리는 참 행복했지. 비록 세월이 흘러 집은 잠시 비워지겠지만, 언젠가 우리 마을을 찾아올 따뜻한 여행자들의 발걸음으로 이 자리가 다시 빛날 것이라 믿는다."
+        `;
+      } else {
+        finalLetterBody.innerHTML = `
+          "친애하는 영희에게.<br><br>
+          승평마을의 가을은 유난히 따뜻했단다. 학교 종소리에 맞춰 골목을 뛰어가던 아이들의 발자국 소리, 마을 사람들이 배움을 나누던 이 집에서 우리는 참 행복했지. 비록 세월이 흘러 집은 잠시 비워지겠지만, 언젠가 우리 마을을 찾아올 따뜻한 여행자들의 발걸음으로 이 자리가 다시 빛날 것이라 믿는다."
+        `;
+      }
+    }
+  }
+
+  // 3. Stage 1 Logic (Onboarding)
+  const onboardingForm = document.getElementById('onboarding-form');
+  const chipContainers = document.querySelectorAll('.choice-chips');
+  const aiMissionText = document.getElementById('ai-mission-text');
+
+  chipContainers.forEach(container => {
+    const chips = container.querySelectorAll('.chip');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        const choiceType = container.dataset.choice;
+        state[choiceType] = chip.dataset.value;
+        updateMissionPreview();
+      });
+    });
+  });
+
+  function updateMissionPreview() {
+    if (state.companion.includes('어린이')) {
+      aiMissionText.textContent = `"${state.companion}과 함께하는 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 외벽을 비춰보세요."`;
+    } else {
+      aiMissionText.textContent = `"${state.companion}을 위한 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 과거의 문을 열어보세요."`;
+    }
+  }
+
+  if (onboardingForm) {
+    onboardingForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      state.currentStage = 2;
+      state.collectedLetters = 1; // First letter fragment collected
+      saveState();
+      playDocent("첫 번째 빈집에 도착했습니다. 외벽을 비추면 과거 잡화점의 모습이 나타납니다.");
+    });
+  }
+
+  // 4. Stage 2 Logic (First Vacant House)
+  const btnNextStage2 = document.getElementById('btn-next-stage-2');
+  if (btnNextStage2) {
+    btnNextStage2.addEventListener('click', () => {
+      state.currentStage = 3;
+      state.collectedLetters = 2; // Second letter fragment collected
+      saveState();
+      playDocent("골목길 바닥을 비춰 우체부의 옛 발자국을 따라가세요.");
+    });
+  }
+
+  // 5. Stage 3 Logic (Alley Tracking)
+  const btnNextStage3 = document.getElementById('btn-next-stage-3');
+  if (btnNextStage3) {
+    btnNextStage3.addEventListener('click', () => {
+      state.currentStage = 4;
+      saveState();
+      playDocent("두 번째 빈집에 도착했습니다. 우체부가 향했던 길을 선택해 주세요.");
+    });
+  }
+
+  // 6. Stage 4 Logic (Branch Selection)
+  const btnChoiceMarket = document.getElementById('btn-choice-market');
+  const btnChoiceSchool = document.getElementById('btn-choice-school');
+
+  if (btnChoiceMarket) {
+    btnChoiceMarket.addEventListener('click', () => {
+      state.branchChoice = 'market';
+      state.currentStage = 5;
+      state.hasStamp = true;
+      state.collectedLetters = 3; // Final letter fragment collected
+      saveState();
+      playDocent("활기찬 전통 오일장 시장 코스로 이동합니다. 제휴 상점 쿠폰이 발급되었습니다.");
+    });
+  }
+
+  if (btnChoiceSchool) {
+    btnChoiceSchool.addEventListener('click', () => {
+      state.branchChoice = 'school';
+      state.currentStage = 5;
+      state.hasStamp = true;
+      state.collectedLetters = 3; // Final letter fragment collected
+      saveState();
+      playDocent("추억의 옛 분교 학교 코스로 이동합니다. 제휴 상점 쿠폰이 발급되었습니다.");
+    });
+  }
+
+  // 7. Stage 5 Logic (Shop & Discount Coupon)
+  const btnNextStage5 = document.getElementById('btn-next-stage-5');
+  if (btnNextStage5) {
+    btnNextStage5.addEventListener('click', () => {
+      state.currentStage = 6;
+      saveState();
+      playDocent("마지막 빈집에 도착했습니다. 세 조각의 편지가 하나로 완성됩니다.");
+    });
+  }
+
+  // 8. Stage 6 Logic (Restored Letter Climax)
+  const btnNextStage6 = document.getElementById('btn-next-stage-6');
+  if (btnNextStage6) {
+    btnNextStage6.addEventListener('click', () => {
+      state.currentStage = 7;
+      saveState();
+      playDocent("축하합니다! 이 빈집의 미래를 위한 시민 투표에 참여해 주세요.");
+    });
+  }
+
+  // 9. Stage 7 Logic (Voting & Realtime Charts)
+  const voteOptionBtns = document.querySelectorAll('.vote-option-btn');
+  const btnSubmitVote = document.getElementById('btn-submit-vote');
+  const votingContainer = document.getElementById('voting-container');
+  const voteResultBox = document.getElementById('vote-result-box');
+  const btnShareFinish = document.getElementById('btn-share-finish');
+
+  voteOptionBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      voteOptionBtns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.userVote = btn.dataset.vote;
+      btnSubmitVote.removeAttribute('disabled');
+    });
+  });
+
+  if (btnSubmitVote) {
+    btnSubmitVote.addEventListener('click', () => {
+      if (!state.userVote) return;
+      saveState();
+
+      votingContainer.classList.add('hidden');
+      voteResultBox.classList.remove('hidden');
+
+      // Animate chart bars
+      setTimeout(() => {
+        const fills = {
+          garden: document.getElementById('fill-garden'),
+          workshop: document.getElementById('fill-workshop'),
+          cafe: document.getElementById('fill-cafe'),
+          preserve: document.getElementById('fill-preserve')
+        };
+        if (fills.garden) fills.garden.style.width = '39%';
+        if (fills.workshop) fills.workshop.style.width = '32%';
+        if (fills.cafe) fills.cafe.style.width = '21%';
+        if (fills.preserve) fills.preserve.style.width = '8%';
+      }, 100);
+    });
+  }
+
+  if (btnShareFinish) {
+    btnShareFinish.addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({
+          title: '승평마을 빈집 AR 탐험 퀘스트 완주!',
+          text: '승평마을 빈집에서 잃어버린 편지를 찾고 미래 빈집 재생 투표에 참여했습니다.',
+          url: window.location.href
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('완주 링크가 클립보드에 복사되었습니다. SNS에 공유해 보세요!');
+      }
+    });
+  }
+
+  // 10. Restart Quest Button
+  const btnRestartQuest = document.getElementById('btn-restart-quest');
+  if (btnRestartQuest) {
+    btnRestartQuest.addEventListener('click', () => {
+      if (confirm('퀘스트를 처음부터 다시 시작하시겠습니까? (수집한 편지와 스탬프가 초기화됩니다)')) {
+        localStorage.removeItem(STORAGE_KEY);
+        state = {
+          currentStage: 1,
+          companion: '가족 (어린이 포함)',
+          theme: '모험·추리',
+          time: '90분 코스',
+          collectedLetters: 0,
+          hasStamp: false,
+          branchChoice: 'market',
+          userVote: null
+        };
+        saveState();
+      }
+    });
+  }
+
+  // 11. Speech Synthesis (Docent Narrator)
+  function playDocent(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ko-KR';
+      utterance.rate = 0.95;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // 12. Host QR Poster Modal
+  const btnQrPoster = document.getElementById('btn-qr-poster');
   const qrModal = document.getElementById('qr-modal');
+  const btnCloseModal = document.getElementById('btn-close-modal');
   const qrTarget = document.getElementById('qrcode-target');
   const currentUrlDisplay = document.getElementById('current-url-display');
   const customUrlInput = document.getElementById('custom-url-input');
   const btnDownloadQr = document.getElementById('btn-download-qr');
 
-  let activeClueId = '1';
-  const collectedClues = new Set();
-  let isSpeechPlaying = false;
-
-  // Set initial 3D Ghost GLB Model to real_ghost.glb
-  arViewer.src = '/real_ghost.glb';
-
-  // 1. Exhibit & 3D Ghost Selector
-  exhibitCards.forEach(card => {
-    card.addEventListener('click', () => {
-      exhibitCards.forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-
-      activeClueId = card.dataset.clueId;
-      const modelUrl = card.dataset.model;
-      const title = card.dataset.title;
-      const desc = card.dataset.desc;
-
-      if (modelUrl) {
-        arViewer.src = modelUrl;
-      }
-
-      docentTitle.textContent = title;
-      docentDesc.textContent = desc;
-
-      stopAudioDocent();
+  if (btnQrPoster) {
+    btnQrPoster.addEventListener('click', () => {
+      qrModal.classList.remove('hidden');
+      const currentUrl = window.location.href;
+      customUrlInput.value = currentUrl;
+      renderQr(currentUrl);
     });
-  });
-
-  // 2. Clue Collection Logic
-  btnCollectClue.addEventListener('click', () => {
-    if (!collectedClues.has(activeClueId)) {
-      collectedClues.add(activeClueId);
-      
-      const slotEl = document.getElementById(`slot-${activeClueId}`);
-      if (slotEl) {
-        slotEl.classList.add('collected');
-      }
-
-      const count = collectedClues.size;
-      clueProgressText.textContent = `${count} / 3 수집 완료`;
-
-      if (count === 3) {
-        setTimeout(() => {
-          escapeModal.classList.remove('hidden');
-        }, 400);
-      } else {
-        alert(`단서 #${activeClueId} 획득 성공!\n폐교 곳곳을 계속 탐험하여 남은 단서를 찾으세요.`);
-      }
-    } else {
-      alert(`이미 수집한 단서입니다. (단서 #${activeClueId})`);
-    }
-  });
-
-  btnCloseEscape.addEventListener('click', () => {
-    escapeModal.classList.add('hidden');
-  });
-
-  // 3. Audio Voice Hints
-  btnPlayDocent.addEventListener('click', () => {
-    if (isSpeechPlaying) {
-      stopAudioDocent();
-    } else {
-      playAudioDocent(docentTitle.textContent, docentDesc.textContent);
-    }
-  });
-
-  function playAudioDocent(title, text) {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const textToSpeak = `폐교의 안내음... ${title}. ${text}`;
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      utterance.lang = 'ko-KR';
-      utterance.rate = 0.88;
-      utterance.pitch = 0.85;
-
-      utterance.onstart = () => { isSpeechPlaying = true; };
-      utterance.onend = () => { isSpeechPlaying = false; };
-      utterance.onerror = () => { isSpeechPlaying = false; };
-
-      window.speechSynthesis.speak(utterance);
-    }
   }
 
-  function stopAudioDocent() {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    isSpeechPlaying = false;
+  if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', () => qrModal.classList.add('hidden'));
   }
 
-  // 4. QR Poster Modal Logic
-  btnQrModal.addEventListener('click', () => {
-    qrModal.classList.remove('hidden');
-    const currentUrl = window.location.href;
-    customUrlInput.value = currentUrl;
-    renderQrCode(currentUrl);
-  });
+  if (qrModal) {
+    qrModal.addEventListener('click', (e) => {
+      if (e.target === qrModal) qrModal.classList.add('hidden');
+    });
+  }
 
-  btnCloseModal.addEventListener('click', () => {
-    qrModal.classList.add('hidden');
-  });
+  if (customUrlInput) {
+    customUrlInput.addEventListener('input', (e) => {
+      const url = e.target.value.trim() || window.location.href;
+      renderQr(url);
+    });
+  }
 
-  customUrlInput.addEventListener('input', (e) => {
-    const targetUrl = e.target.value.trim() || window.location.href;
-    renderQrCode(targetUrl);
-  });
-
-  function renderQrCode(url) {
+  function renderQr(url) {
+    if (!qrTarget) return;
     currentUrlDisplay.textContent = url;
     qrTarget.innerHTML = '';
-    QRCode.toCanvas(url, { width: 170, margin: 2, color: { dark: '#0b0f19', light: '#ffffff' } }, (err, canvas) => {
+    QRCode.toCanvas(url, { width: 170, margin: 2, color: { dark: '#0c1017', light: '#ffffff' } }, (err, canvas) => {
       if (!err) qrTarget.appendChild(canvas);
     });
   }
 
-  // 5. Download QR Image
-  btnDownloadQr.addEventListener('click', () => {
-    const canvas = qrTarget.querySelector('canvas');
-    if (canvas) {
-      const imageUri = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = 'haunted-school-ar-qr.png';
-      link.href = imageUri;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  });
+  if (btnDownloadQr) {
+    btnDownloadQr.addEventListener('click', () => {
+      const canvas = qrTarget.querySelector('canvas');
+      if (canvas) {
+        const link = document.createElement('a');
+        link.download = 'seungpyeong-village-ar-qr.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+    });
+  }
+
+  // Initial Load
+  updateUI();
 });

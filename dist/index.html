@@ -3,176 +3,423 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>폐교 미스터리 AR | 잃어버린 단서를 찾아라</title>
+  <title>승평마을 빈집 AR 탐험 퀘스트 | 잃어버린 편지의 비밀</title>
   
-  <!-- Fonts -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@400;600;700;800&family=Song+Myung&display=swap" rel="stylesheet">
   
   
   <!-- Model Viewer Component -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-  <script type="module" crossorigin src="/assets/index-v0_0hLir.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-tnk62MSC.css">
+  <script type="module" crossorigin src="/assets/index-Qc22OsCq.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-FCX1HRnc.css">
 </head>
 <body>
-  <div id="app" class="haunted-theme">
-    <!-- Header Navbar -->
-    <header class="navbar">
-      <div class="brand">
-        <span class="brand-badge">HAUNTED AR GAME</span>
-        <h1 class="brand-title">폐교의 비밀 <span>공중 유령 단서 찾기</span></h1>
+  <div id="app" class="village-quest-app">
+    
+    <!-- Top Global Quest Bar -->
+    <header class="quest-topbar">
+      <div class="village-brand">
+        <span class="quest-tag">승평마을 로컬 AR 투어</span>
+        <h1 class="quest-app-title">잃어버린 편지의 비밀</h1>
       </div>
-      <div class="nav-actions">
-        <button id="btn-qr-modal" class="btn btn-spooky-outline">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          <span>QR 코드 인쇄</span>
+      <div class="topbar-actions">
+        <button id="btn-qr-poster" class="btn-icon" title="현장용 QR 코드 생성">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </button>
+        <button id="btn-restart-quest" class="btn-icon" title="처음부터 다시 시작">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
         </button>
       </div>
     </header>
 
-    <!-- Clue Inventory Tracker -->
-    <section class="inventory-bar">
-      <div class="inventory-info">
-        <span class="inventory-label">폐교 단서 수집 Status</span>
-        <span class="inventory-count" id="clue-progress-text">0 / 3 수집 완료</span>
+    <!-- Progress & Clue Tracker -->
+    <nav class="quest-stepper-container">
+      <div class="stepper-header">
+        <span class="current-step-label" id="stepper-label">1단계 / 마을 입구</span>
+        <span class="inventory-status" id="inventory-summary">수집 편지 0/3 · 스탬프 0개</span>
       </div>
-      <div class="inventory-slots">
-        <div class="slot" id="slot-1" title="단서 1: 꼬마 유령의 오르골">
-          <span class="slot-num">01</span>
-        </div>
-        <div class="slot" id="slot-2" title="단서 2: 찢어진 일기장">
-          <span class="slot-num">02</span>
-        </div>
-        <div class="slot" id="slot-3" title="단서 3: 비밀 구리 열쇠">
-          <span class="slot-num">03</span>
-        </div>
+      <div class="stepper-dots">
+        <div class="step-dot active" data-step="1">1</div>
+        <div class="step-dot" data-step="2">2</div>
+        <div class="step-dot" data-step="3">3</div>
+        <div class="step-dot" data-step="4">4</div>
+        <div class="step-dot" data-step="5">5</div>
+        <div class="step-dot" data-step="6">6</div>
+        <div class="step-dot" data-step="7">7</div>
       </div>
-    </section>
+    </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- 3D / AR Viewer -->
-      <section class="viewer-section">
-        <div class="model-container" id="model-wrapper">
-          
-          <model-viewer
-            id="ar-viewer"
-            src="/real_ghost.glb"
-            alt="폐교 3D 유령 모델 AR"
-            ar
-            ar-modes="webxr scene-viewer quick-look"
-            camera-controls
-            touch-action="pan-y"
-            auto-rotate
-            shadow-intensity="1.5"
-            exposure="1.15"
-            ar-placement="wall"
-            interaction-prompt="auto">
-            
-            <button slot="ar-button" id="ar-trigger-btn" class="ar-floating-btn haunted-btn">
-              <span class="ghost-pulse-ring"></span>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-              <span>카메라로 3D 유령 공중 배치</span>
-            </button>
-          </model-viewer>
+    <!-- Main Dynamic Stage Canvas -->
+    <main class="quest-viewport">
 
-          <!-- Top Status Bar -->
-          <div class="viewer-overlay-top">
-            <div class="status-chip spooky-chip">
-              <span class="status-dot green-glow"></span>
-              <span id="model-status-text">3D Ghost Model Loaded (Mid-Air AR)</span>
+      <!-- STAGE 1: 마을 입구 - AI 맞춤 온보딩 -->
+      <section id="stage-1" class="quest-stage active">
+        <div class="stage-card">
+          <div class="stage-badge">STAGE 1 · 마을 입구</div>
+          <h2 class="stage-title">AI 안내 우체부와 함께 떠나는 승평마을 탐험</h2>
+          <p class="stage-desc">
+            마을 어귀에 도착하셨군요! 우리 가족만을 위한 맞춤 코스를 생성하기 위해 간단한 정보를 알려주세요.
+          </p>
+
+          <form id="onboarding-form" class="custom-form">
+            <div class="form-group">
+              <label>동반 인원 및 형태</label>
+              <div class="choice-chips" data-choice="companion">
+                <button type="button" class="chip active" data-value="가족 (어린이 포함)">가족 (어린이 포함)</button>
+                <button type="button" class="chip" data-value="연인·커플">연인·커플</button>
+                <button type="button" class="chip" data-value="친구들">친구들</button>
+                <button type="button" class="chip" data-value="나홀로 탐험">나홀로 탐험</button>
+              </div>
             </div>
+
+            <div class="form-group">
+              <label>선호하는 탐험 분위기</label>
+              <div class="choice-chips" data-choice="theme">
+                <button type="button" class="chip active" data-value="모험·추리">모험·추리</button>
+                <button type="button" class="chip" data-value="감성·역사 힐링">감성·역사 힐링</button>
+                <button type="button" class="chip" data-value="가벼운 산책">가벼운 산책</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>예상 탐험 시간</label>
+              <div class="choice-chips" data-choice="time">
+                <button type="button" class="chip" data-value="60분 코스">60분 코스</button>
+                <button type="button" class="chip active" data-value="90분 코스">90분 코스</button>
+                <button type="button" class="chip" data-value="120분 코스">120분 완주 코스</button>
+              </div>
+            </div>
+
+            <div class="mission-preview-box" id="mission-preview">
+              <div class="preview-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span>AI가 생성한 우리 가족 첫 번째 미션</span>
+              </div>
+              <p class="preview-text" id="ai-mission-text">
+                "승평마을에서 오래전 전해지지 못한 옛 편지 한 통이 발견되었습니다. 첫 번째 빈집으로 이동하여 외벽을 비춰보세요."
+              </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-large">
+              <span>탐험 퀘스트 시작하기</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- STAGE 2: 첫 번째 빈집 - AR 과거 복원 -->
+      <section id="stage-2" class="quest-stage">
+        <div class="stage-card">
+          <div class="stage-badge">STAGE 2 · 첫 번째 빈집</div>
+          <h2 class="stage-title">외벽 너머로 과거의 집을 복원하다</h2>
+          <p class="stage-desc">
+            안전을 위해 건물 안으로 들어가지 마세요! 외벽을 비추면 AR로 과거 1970년대의 따뜻한 가게 모습이 되살아납니다.
+          </p>
+
+          <!-- 3D AR Scene Box -->
+          <div class="ar-scene-container">
+            <model-viewer
+              id="viewer-stage-2"
+              src="/real_ghost.glb"
+              alt="과거 승평마을 가게 복원 3D"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              camera-controls
+              auto-rotate
+              shadow-intensity="1.5"
+              exposure="1.1"
+              ar-placement="wall">
+              <button slot="ar-button" class="ar-overlay-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                <span>현장 외벽에 AR 복원 띄우기</span>
+              </button>
+            </model-viewer>
+          </div>
+
+          <!-- Character Dialog Box -->
+          <div class="dialogue-box">
+            <div class="dialogue-avatar">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="dialogue-content">
+              <div class="speaker-name">가상의 옛 주민 할아버지</div>
+              <p class="speaker-text">
+                "어서 오너라. 나는 이곳에서 작은 잡화점을 운영했단다. 오래전 우체부가 골목 쪽으로 급히 걸어가며 바닥에 표식을 남겼지. 골목길로 가보렴."
+              </p>
+            </div>
+          </div>
+
+          <div class="clue-reward-card">
+            <div class="reward-icon">✉️</div>
+            <div class="reward-info">
+              <h4>첫 번째 편지 조각 획득</h4>
+              <p>"친애하는 영희에게... 승평마을의 가을은..."</p>
+            </div>
+          </div>
+
+          <button id="btn-next-stage-2" class="btn btn-primary btn-large">
+            <span>골목길로 이동하여 단서 찾기</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- STAGE 3: 골목길 - AR 발자국 & 단서 추적 -->
+      <section id="stage-3" class="quest-stage">
+        <div class="stage-card">
+          <div class="stage-badge">STAGE 3 · 마을 골목길</div>
+          <h2 class="stage-title">우체부의 발자국을 따라가세요</h2>
+          <p class="stage-desc">
+            AI 우체부 힌트: "빨간 대문이 있는 돌담길 근처를 카메라로 비추면 보이지 않던 발자국이 나타납니다."
+          </p>
+
+          <!-- Interactive Alley Radar / Compass -->
+          <div class="alley-tracker-box">
+            <div class="compass-circle">
+              <div class="compass-needle" id="compass-needle"></div>
+              <div class="compass-target">빨간 대문</div>
+            </div>
+            <div class="footprint-indicator">
+              <span class="footprint-pulse"></span>
+              <p>골목 바닥에 우체부의 옛 발자국 발견!</p>
+            </div>
+          </div>
+
+          <div class="clue-reward-card">
+            <div class="reward-icon">✉️</div>
+            <div class="reward-info">
+              <h4>두 번째 편지 조각 획득</h4>
+              <p>"...마을 사람들의 온기가 머물던 그 길목에서..."</p>
+            </div>
+          </div>
+
+          <button id="btn-next-stage-3" class="btn btn-primary btn-large">
+            <span>두 번째 빈집으로 진입</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- STAGE 4: 두 번째 빈집 - 스토리 분기 선택 -->
+      <section id="stage-4" class="quest-stage">
+        <div class="stage-card">
+          <div class="stage-badge">STAGE 4 · 두 번째 빈집</div>
+          <h2 class="stage-title">선택의 기로: 우체부는 어디로 향했을까요?</h2>
+          <p class="stage-desc">
+            가족의 선택에 따라 다음 목적지와 최종 결말이 달라집니다. 어디로 이동하시겠습니까?
+          </p>
+
+          <div class="dialogue-box">
+            <div class="dialogue-avatar">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8v12l3-3 3 3 2-2 2 2 3-3 3 3V10a8 8 0 0 0-8-8z"></path></svg>
+            </div>
+            <div class="dialogue-content">
+              <div class="speaker-name">마을의 옛 이야기꾼</div>
+              <p class="speaker-text">
+                "그날 우체부는 사람 냄새 가득한 시장으로 갔을까, 아이들 웃음소리가 울리던 옛 학교로 갔을까?"
+              </p>
+            </div>
+          </div>
+
+          <!-- Branch Options -->
+          <div class="branch-selector">
+            <button class="branch-card" id="btn-choice-market" data-branch="market">
+              <div class="branch-icon">🧺</div>
+              <div class="branch-info">
+                <h3>경로 A: 활기찬 오일장 시장 코스</h3>
+                <p>승평마을 전통 시장과 정겨운 사랑방 카페로 향합니다.</p>
+              </div>
+            </button>
+
+            <button class="branch-card" id="btn-choice-school" data-branch="school">
+              <div class="branch-icon">🏫</div>
+              <div class="branch-info">
+                <h3>경로 B: 추억의 옛 분교 학교 코스</h3>
+                <p>풀내음 가득한 옛 분교 터와 마을 베이커리 쉼터로 향합니다.</p>
+              </div>
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- Ghost Selection & Mysterious Clue Story -->
-      <section class="control-section">
-        <!-- Ghost Selector -->
-        <div class="exhibit-selector">
-          <h2 class="section-title">심령 반응 탐지기 (3D 유령 선택)</h2>
-          <div class="exhibit-grid">
-            <button class="exhibit-card active" data-clue-id="1" data-model="/real_ghost.glb" data-title="1998년 꼬마 유령의 경고" data-desc="손을 흔들며 공중에 떠있는 귀여운 3D 유령입니다. '밤 12시가 되면 음악실에서 오르골 소리가 들려...'">
-              <div class="card-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8v12l3-3 3 3 2-2 2 2 3-3 3 3V10a8 8 0 0 0-8-8z"></path><circle cx="9" cy="10" r="1"></circle><circle cx="15" cy="10" r="1"></circle></svg>
-              </div>
-              <div class="card-info">
-                <h3>1998년 꼬마 3D 유령</h3>
-                <p>단서 #1: 음악실의 비밀 오르골</p>
-              </div>
-            </button>
-
-            <button class="exhibit-card" data-clue-id="2" data-model="/real_ghost_mint.glb" data-title="도서관 귀신의 찢어진 일기장" data-desc="민트빛 영혼의 기운을 품고 공중에 떠도는 3D 유령입니다. '3번째 책장 뒤에 열쇠를 묻었다...'">
-              <div class="card-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-              </div>
-              <div class="card-info">
-                <h3>도서관 민트 3D 유령</h3>
-                <p>단서 #2: 비밀 책장의 열쇠 위치</p>
-              </div>
-            </button>
-
-            <button class="exhibit-card" data-clue-id="3" data-model="/real_ghost_purple.glb" data-title="비밀 마법 구리 열쇠" data-desc="신비로운 보랏빛 오라를 내뿜으며 공중에 부유하는 3D 유령입니다. 비밀번호는 [ 7 - 0 - 4 - 9 ]">
-              <div class="card-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
-              </div>
-              <div class="card-info">
-                <h3>강당 퍼플 3D 유령</h3>
-                <p>단서 #3: 강당의 최종 비밀번호</p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Clue Action & Docent Card -->
-        <div class="docent-card spooky-card">
-          <div class="docent-header">
-            <div class="docent-badge">MYSTERY CLUE</div>
-            <h3 id="docent-title">1998년 꼬마 유령의 경고</h3>
-          </div>
-          <p id="docent-desc" class="docent-desc">
-            손을 흔들며 공중에 떠있는 귀여운 3D 유령입니다. "밤 12시가 되면 음악실에서 오르골 소리가 들려..."
+      <!-- STAGE 5: 지역 상점 - 소비 연계 & 모바일 쿠폰 -->
+      <section id="stage-5" class="quest-stage">
+        <div class="stage-card">
+          <div class="stage-badge">STAGE 5 · 지역 상권 연계</div>
+          <h2 class="stage-title" id="stage-5-title">지역 상점에서 단서 확인 & 리워드</h2>
+          <p class="stage-desc" id="stage-5-desc">
+            마을 상점에 방문하여 카운터의 AR 스탬프를 확인하세요. 지역 경제 활성화를 위한 실물 할인 혜택이 제공됩니다!
           </p>
-          <div class="clue-action-bar">
-            <button id="btn-collect-clue" class="btn btn-spooky-primary full-width">
-              <span>유령에게서 단서 수집하기</span>
+
+          <!-- AR Stamp Book -->
+          <div class="stamp-display-card">
+            <div class="stamp-circle stamped">
+              <span class="stamp-text">승평 로컬</span>
+              <span class="stamp-sub">STAMP OK</span>
+            </div>
+            <div class="stamp-meta">
+              <h3>승평 로컬 상생 스탬프 획득 완료</h3>
+              <p>마을 제휴 상점에서 실제 사용 가능한 쿠폰이 발급되었습니다.</p>
+            </div>
+          </div>
+
+          <!-- Real Mobile Coupon Barcode -->
+          <div class="coupon-ticket">
+            <div class="coupon-header">
+              <span class="coupon-tag">마을 상점 즉시 할인</span>
+              <h3 id="coupon-store-name">승평 사랑방 카페 음료 1,000원 할인</h3>
+            </div>
+            <div class="coupon-barcode-box">
+              <div class="mock-barcode">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div class="coupon-code">SP-2026-AR904</div>
+              <span class="coupon-validity">※ 당일 방문 결제 시 직원에게 보여주세요.</span>
+            </div>
+          </div>
+
+          <div class="clue-reward-card">
+            <div class="reward-icon">✉️</div>
+            <div class="reward-info">
+              <h4>세 번째 편지 조각 획득</h4>
+              <p>"...우리가 남긴 빈집이 훗날 다시 사람들의 온기로 채워지길..."</p>
+            </div>
+          </div>
+
+          <button id="btn-next-stage-5" class="btn btn-primary btn-large">
+            <span>마지막 빈집으로 이동하여 이야기 완성하기</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- STAGE 6: 마지막 빈집 - 이야기 완성 & 과거 회상 -->
+      <section id="stage-6" class="quest-stage">
+        <div class="stage-card">
+          <div class="stage-badge">STAGE 6 · 마지막 빈집</div>
+          <h2 class="stage-title">모든 단서가 모여 완성된 편지</h2>
+          <p class="stage-desc">
+            지금은 비어있는 마지막 빈집 마당에서 세 조각의 편지가 하나로 합쳐집니다.
+          </p>
+
+          <!-- Restored Letter Card -->
+          <div class="restored-letter">
+            <div class="letter-paper">
+              <h3 class="letter-title">승평마을에서 온 편지</h3>
+              <p class="letter-body" id="final-letter-body">
+                "친애하는 영희에게.<br><br>
+                승평마을의 가을은 유난히 따뜻했단다. 마을 사람들의 정이 넘치던 골목길, 아이들의 웃음소리가 울리던 이 집에서 우리는 참 행복했지. 비록 세월이 흘러 집은 잠시 비워지겠지만, 언젠가 우리 마을을 찾아올 따뜻한 여행자들의 발걸음으로 이 자리가 다시 빛날 것이라 믿는다."
+              </p>
+              <div class="letter-author">— 1978년 승평마을 주민 일동</div>
+            </div>
+          </div>
+
+          <button id="btn-next-stage-6" class="btn btn-primary btn-large">
+            <span>이 공간의 미래를 함께 만들기</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- STAGE 7: 엔딩 - 빈집 미래 수요 투표 & 데이터 수집 -->
+      <section id="stage-7" class="quest-stage">
+        <div class="stage-card">
+          <div class="stage-badge">STAGE 7 · 에필로그 & 미래</div>
+          <h2 class="stage-title">이 빈집은 앞으로 어떤 공간이 되면 좋을까요?</h2>
+          <p class="stage-desc">
+            여러분의 소중한 선택은 단순한 게임을 넘어 **승평마을 빈집 재생 정책의 실제 시민 수요 데이터**로 집계됩니다.
+          </p>
+
+          <!-- Voting Form -->
+          <div id="voting-container" class="voting-form">
+            <div class="vote-options">
+              <button class="vote-option-btn" data-vote="garden">
+                <div class="vote-radio"></div>
+                <div class="vote-text">
+                  <strong>작은 숲 정원 & 마을 쉼터</strong>
+                  <p>주민과 관광객이 차 한잔 마시며 쉴 수 있는 도심 속 녹지 정원</p>
+                </div>
+              </button>
+
+              <button class="vote-option-btn" data-vote="workshop">
+                <div class="vote-radio"></div>
+                <div class="vote-text">
+                  <strong>로컬 공방 & 체험 공간</strong>
+                  <p>도자기, 목공, 농산물 쿠킹클래스 등 청년 예술가와 함께하는 체험소</p>
+                </div>
+              </button>
+
+              <button class="vote-option-btn" data-vote="cafe">
+                <div class="vote-radio"></div>
+                <div class="vote-text">
+                  <strong>마을 청년 카페 & 스테이</strong>
+                  <p>지역 특산물 디저트를 파는 감성 카페 및 워케이션 공유 공간</p>
+                </div>
+              </button>
+
+              <button class="vote-option-btn" data-vote="preserve">
+                <div class="vote-radio"></div>
+                <div class="vote-text">
+                  <strong>역사 아카이브 & 옛 모습 그대로 보존</strong>
+                  <p>승평마을의 옛 생활상과 사진을 전시하는 작은 역사관</p>
+                </div>
+              </button>
+            </div>
+
+            <button id="btn-submit-vote" class="btn btn-primary btn-large" disabled>
+              <span>나의 의견 투표하고 탐험 완주하기</span>
             </button>
-            <button id="btn-play-docent" class="btn btn-secondary">
-              <svg id="play-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              <span>음성 힌트</span>
+          </div>
+
+          <!-- Realtime Voting Results -->
+          <div id="vote-result-box" class="vote-result-box hidden">
+            <div class="completion-banner">
+              <div class="trophy-badge">🏆</div>
+              <h3>승평마을 빈집 탐험 완주 증명서</h3>
+              <p>축하합니다! 우리 가족의 발걸음이 승평마을의 내일을 만듭니다.</p>
+            </div>
+
+            <div class="chart-container">
+              <h4>현재까지의 시민 투표 집계 현황</h4>
+              <div class="chart-bar-group">
+                <div class="bar-label"><span>작은 숲 정원</span><span id="pct-garden">38%</span></div>
+                <div class="bar-track"><div class="bar-fill" id="fill-garden" style="width: 38%"></div></div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="bar-label"><span>로컬 공방·체험</span><span id="pct-workshop">31%</span></div>
+                <div class="bar-track"><div class="bar-fill" id="fill-workshop" style="width: 31%"></div></div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="bar-label"><span>청년 카페·스테이</span><span id="pct-cafe">22%</span></div>
+                <div class="bar-track"><div class="bar-fill" id="fill-cafe" style="width: 22%"></div></div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="bar-label"><span>옛 역사 보존</span><span id="pct-preserve">9%</span></div>
+                <div class="bar-track"><div class="bar-fill" id="fill-preserve" style="width: 9%"></div></div>
+              </div>
+            </div>
+
+            <button id="btn-share-finish" class="btn btn-secondary full-width">
+              <span>탐험 완주 인증서 공유하기</span>
             </button>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Escape Complete Modal -->
-    <div id="escape-modal" class="modal-backdrop hidden">
-      <div class="modal-card spooky-modal">
-        <div class="modal-header">
-          <h2>폐교의 모든 단서 수집 완료!</h2>
-          <button id="btn-close-escape" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body text-center">
-          <div class="badge-icon-box">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00ffcc" stroke-width="2"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-          </div>
-          <p class="modal-intro">축하합니다! 폐교에 떠도는 모든 3D 유령과 공중 단서를 발견했습니다.<br><br><strong class="highlight-code">최종 탈출 비밀번호: [ 7049 ]</strong></p>
-        </div>
-      </div>
-    </div>
-
-    <!-- QR Poster Modal -->
+    <!-- Host QR Generator Modal -->
     <div id="qr-modal" class="modal-backdrop hidden">
-      <div class="modal-card spooky-modal">
+      <div class="modal-card">
         <div class="modal-header">
-          <h2>폐교 탐험용 QR 포스터</h2>
+          <h2>승평마을 현장용 QR 포스터</h2>
           <button id="btn-close-modal" class="close-btn">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="modal-intro">이 QR 코드를 폐교 입구나 복도에 붙여두세요.<br>방문자가 찍으면 공중에 3D 유령이 나타나는 미스터리 게임이 시작됩니다.</p>
+          <p class="modal-intro">마을 입구 안내 현수막이나 빈집 외벽에 부착할 QR 코드입니다. 스마트폰 카메라로 스캔하면 즉시 1단계 탐험이 시작됩니다.</p>
           <div class="qr-preview-box">
             <div id="qrcode-target"></div>
             <div class="qr-url-badge" id="current-url-display">https://...</div>
@@ -183,7 +430,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button id="btn-download-qr" class="btn btn-spooky-primary full-width">
+          <button id="btn-download-qr" class="btn btn-primary full-width">
             <span>QR 포스터 이미지 저장</span>
           </button>
         </div>
