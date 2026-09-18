@@ -58,7 +58,7 @@
           
           <model-viewer
             id="ar-viewer"
-            src=""
+            src="/ghost.glb"
             alt="폐교 3D 유령 모델 AR"
             ar
             ar-modes="webxr scene-viewer quick-look"
@@ -66,7 +66,7 @@
             touch-action="pan-y"
             auto-rotate
             shadow-intensity="2"
-            exposure="1.1"
+            exposure="1.2"
             ar-placement="wall"
             interaction-prompt="auto">
             
@@ -81,7 +81,7 @@
           <div class="viewer-overlay-top">
             <div class="status-chip spooky-chip">
               <span class="status-dot green-glow"></span>
-              <span>3D Ghost Engine Active (Mid-Air AR)</span>
+              <span id="model-status-text">GitHub 3D Ghost GLB Loaded</span>
             </div>
           </div>
         </div>
@@ -91,34 +91,34 @@
       <section class="control-section">
         <!-- Ghost Selector -->
         <div class="exhibit-selector">
-          <h2 class="section-title">심령 반응 탐지기 (단서 위치 선택)</h2>
+          <h2 class="section-title">심령 반응 탐지기 (3D 유령 선택)</h2>
           <div class="exhibit-grid">
-            <button class="exhibit-card active" data-clue-id="1" data-title="1998년 꼬마 유령의 경고" data-desc="폐교 음악실 공중에 떠있는 꼬마 유령입니다. '밤 12시가 되면 오르골 소리가 들려...'">
+            <button class="exhibit-card active" data-clue-id="1" data-model="/ghost.glb" data-title="1998년 꼬마 유령의 경고" data-desc="폐교 음악실 공중에 떠있는 꼬마 3D 유령입니다. '밤 12시가 되면 오르골 소리가 들려...'">
               <div class="card-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8v12l3-3 3 3 2-2 2 2 3-3 3 3V10a8 8 0 0 0-8-8z"></path><circle cx="9" cy="10" r="1"></circle><circle cx="15" cy="10" r="1"></circle></svg>
               </div>
               <div class="card-info">
-                <h3>1998년 꼬마 유령</h3>
+                <h3>1998년 꼬마 3D 유령 (Ghost A)</h3>
                 <p>단서 #1: 음악실의 비밀 오르골</p>
               </div>
             </button>
 
-            <button class="exhibit-card" data-clue-id="2" data-title="도서관 귀신의 찢어진 일기장" data-desc="공중에 허공을 떠도는 오래된 낡은 일기장 조각입니다. '3번째 책장 뒤에 열쇠를 묻었다...'">
+            <button class="exhibit-card" data-clue-id="2" data-model="/ghost2.glb" data-title="도서관 귀신의 찢어진 일기장" data-desc="공중에 떠도는 3D 심령 유령 캐릭터입니다. '3번째 책장 뒤에 열쇠를 묻었다...'">
               <div class="card-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
               </div>
               <div class="card-info">
-                <h3>도서관 귀신의 일기장</h3>
+                <h3>도서관 3D 유령 (Ghost B)</h3>
                 <p>단서 #2: 비밀 책장의 열쇠 위치</p>
               </div>
             </button>
 
-            <button class="exhibit-card" data-clue-id="3" data-title="비밀 마법 구리 열쇠" data-desc="폐교 강당 중앙 공중에 부유하는 녹슨 구리 열쇠입니다. 비밀번호는 [ 7 - 0 - 4 - 9 ]">
+            <button class="exhibit-card" data-clue-id="3" data-model="/ghost3.glb" data-title="비밀 마법 구리 열쇠" data-desc="폐교 강당 중앙 공중에 부유하는 3D 유령입니다. 비밀번호는 [ 7 - 0 - 4 - 9 ]">
               <div class="card-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
               </div>
               <div class="card-info">
-                <h3>비밀 마법 구리 열쇠</h3>
+                <h3>강당 3D 유령 (Ghost C)</h3>
                 <p>단서 #3: 강당의 최종 비밀번호</p>
               </div>
             </button>
@@ -132,7 +132,7 @@
             <h3 id="docent-title">1998년 꼬마 유령의 경고</h3>
           </div>
           <p id="docent-desc" class="docent-desc">
-            폐교 음악실 공중에 떠있는 꼬마 유령입니다. "밤 12시가 되면 오르골 소리가 들려..."
+            폐교 음악실 공중에 떠있는 꼬마 3D 유령입니다. "밤 12시가 되면 오르골 소리가 들려..."
           </p>
           <div class="clue-action-bar">
             <button id="btn-collect-clue" class="btn btn-spooky-primary full-width">
