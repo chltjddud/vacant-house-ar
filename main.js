@@ -5,10 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const exhibitCards = document.querySelectorAll('.exhibit-card');
   const docentTitle = document.getElementById('docent-title');
   const docentDesc = document.getElementById('docent-desc');
+  const btnCollectClue = document.getElementById('btn-collect-clue');
   const btnPlayDocent = document.getElementById('btn-play-docent');
-  const docentBtnText = document.getElementById('docent-btn-text');
-  const audioWave = document.getElementById('audio-wave');
-  const playIcon = document.getElementById('play-icon');
+  const clueProgressText = document.getElementById('clue-progress-text');
+  
+  const escapeModal = document.getElementById('escape-modal');
+  const btnCloseEscape = document.getElementById('btn-close-escape');
 
   const btnQrModal = document.getElementById('btn-qr-modal');
   const btnCloseModal = document.getElementById('btn-close-modal');
@@ -17,49 +19,62 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentUrlDisplay = document.getElementById('current-url-display');
   const customUrlInput = document.getElementById('custom-url-input');
   const btnDownloadQr = document.getElementById('btn-download-qr');
-  const compatibilityText = document.getElementById('compatibility-text');
 
+  let activeClueId = '1';
+  const collectedClues = new Set();
   let isSpeechPlaying = false;
-  let synthUtterance = null;
 
-  // 1. WebXR AR Capability Check
-  if (navigator.xr) {
-    navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-      if (supported) {
-        compatibilityText.textContent = 'WebXR AR 호환 가능 (스마트폰 즉시 체험)';
-      } else {
-        compatibilityText.textContent = '3D 뷰어 모드 (AR 지원 기기 연결 권장)';
-      }
-    }).catch(() => {
-      compatibilityText.textContent = '3D & AR QuickLook 스캐너 준비됨';
-    });
-  } else {
-    compatibilityText.textContent = 'AR QuickLook / Model-Viewer 호환 모드';
-  }
-
-  // 2. Exhibit Switcher
+  // 1. Exhibit & Clue Selector
   exhibitCards.forEach(card => {
     card.addEventListener('click', () => {
       exhibitCards.forEach(c => c.classList.remove('active'));
       card.classList.add('active');
 
+      activeClueId = card.dataset.clueId;
       const modelUrl = card.dataset.model;
       const title = card.dataset.title;
       const desc = card.dataset.desc;
 
-      // Update 3D Model
       arViewer.src = modelUrl;
-
-      // Update Docent Info
       docentTitle.textContent = title;
       docentDesc.textContent = desc;
 
-      // Reset Audio if playing
       stopAudioDocent();
     });
   });
 
-  // 3. Audio Docent (Text-to-Speech API)
+  // 2. Clue Collection Logic
+  btnCollectClue.addEventListener('click', () => {
+    if (!collectedClues.has(activeClueId)) {
+      collectedClues.add(activeClueId);
+      
+      // Highlight slot
+      const slotEl = document.getElementById(`slot-${activeClueId}`);
+      if (slotEl) {
+        slotEl.classList.add('collected');
+      }
+
+      // Update count
+      const count = collectedClues.size;
+      clueProgressText.textContent = `${count} / 3 수집 완료`;
+
+      if (count === 3) {
+        setTimeout(() => {
+          escapeModal.classList.remove('hidden');
+        }, 500);
+      } else {
+        alert(`🧩 단서 #${activeClueId} 획득 성공!\n폐교 곳곳을 계속 탐험하여 남은 단서를 찾으세요.`);
+      }
+    } else {
+      alert(`이미 수집한 단서입니다! (단서 #${activeClueId})`);
+    }
+  });
+
+  btnCloseEscape.addEventListener('click', () => {
+    escapeModal.classList.add('hidden');
+  });
+
+  // 3. Audio Voice Hints
   btnPlayDocent.addEventListener('click', () => {
     if (isSpeechPlaying) {
       stopAudioDocent();
@@ -71,29 +86,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function playAudioDocent(title, text) {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const textToSpeak = `전시 작품 안내입니다. ${title}. ${text}`;
-      synthUtterance = new SpeechSynthesisUtterance(textToSpeak);
-      synthUtterance.lang = 'ko-KR';
-      synthUtterance.rate = 0.95;
+      const textToSpeak = `폐교의 소리... ${title}. ${text}`;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.lang = 'ko-KR';
+      utterance.rate = 0.85; // Slow spooky pitch/rate
+      utterance.pitch = 0.8;
 
-      synthUtterance.onstart = () => {
-        isSpeechPlaying = true;
-        docentBtnText.textContent = '음성 정지';
-        audioWave.classList.remove('hidden');
-        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
-      };
+      utterance.onstart = () => { isSpeechPlaying = true; };
+      utterance.onend = () => { isSpeechPlaying = false; };
+      utterance.onerror = () => { isSpeechPlaying = false; };
 
-      synthUtterance.onend = () => {
-        stopAudioDocent();
-      };
-
-      synthUtterance.onerror = () => {
-        stopAudioDocent();
-      };
-
-      window.speechSynthesis.speak(synthUtterance);
-    } else {
-      alert('이 브라우저는 오디오 음성 합성을 지원하지 않습니다.');
+      window.speechSynthesis.speak(utterance);
     }
   }
 
@@ -102,12 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.speechSynthesis.cancel();
     }
     isSpeechPlaying = false;
-    docentBtnText.textContent = '오디오 도슨트 듣기';
-    audioWave.classList.add('hidden');
-    playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
   }
 
-  // 4. QR Code Generator & Modal Logic
+  // 4. QR Poster Modal Logic
   btnQrModal.addEventListener('click', () => {
     qrModal.classList.remove('hidden');
     const currentUrl = window.location.href;
@@ -119,12 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     qrModal.classList.add('hidden');
   });
 
-  qrModal.addEventListener('click', (e) => {
-    if (e.target === qrModal) {
-      qrModal.classList.add('hidden');
-    }
-  });
-
   customUrlInput.addEventListener('input', (e) => {
     const targetUrl = e.target.value.trim() || window.location.href;
     renderQrCode(targetUrl);
@@ -133,10 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderQrCode(url) {
     currentUrlDisplay.textContent = url;
     qrTarget.innerHTML = '';
-
-    QRCode.toCanvas(url, { width: 180, margin: 2, color: { dark: '#040914', light: '#ffffff' } }, (err, canvas) => {
-      if (err) console.error(err);
-      else qrTarget.appendChild(canvas);
+    QRCode.toCanvas(url, { width: 170, margin: 2, color: { dark: '#0b0f19', light: '#ffffff' } }, (err, canvas) => {
+      if (!err) qrTarget.appendChild(canvas);
     });
   }
 
@@ -146,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (canvas) {
       const imageUri = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = 'vacant-house-ar-qr.png';
+      link.download = 'haunted-school-ar-qr.png';
       link.href = imageUri;
       document.body.appendChild(link);
       link.click();

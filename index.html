@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>빈집의 재탄생 | Spatial Renewal WebAR</title>
+  <title>👻 폐교 미스터리 AR | 잃어버린 단서를 찾아라</title>
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Noto+Sans+KR:wght@300;400;700;900&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="/style.css" />
   
@@ -16,142 +16,171 @@
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 </head>
 <body>
-  <div id="app">
+  <div id="app" class="haunted-theme">
+    <!-- Eerie Fog Particles Overlay -->
+    <div class="fog-overlay"></div>
+
     <!-- Header Navbar -->
     <header class="navbar">
       <div class="brand">
-        <span class="brand-badge">WEB AR</span>
-        <h1 class="brand-title">RE:SPACE <span>빈집의 재탄생</span></h1>
+        <span class="brand-badge spooky-pulse">👻 HAUNTED AR GAME</span>
+        <h1 class="brand-title">폐교의 비밀 <span>공중 유령 단서 찾기</span></h1>
       </div>
       <div class="nav-actions">
-        <button id="btn-qr-modal" class="btn btn-secondary">
+        <button id="btn-qr-modal" class="btn btn-spooky-outline">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          <span>QR 포스터 생성</span>
+          <span>QR 코드 인쇄</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Clue Inventory Tracker -->
+    <section class="inventory-bar">
+      <div class="inventory-info">
+        <span class="inventory-label">🧩 폐교 단서 수집</span>
+        <span class="inventory-count" id="clue-progress-text">0 / 3 수집 완료</span>
+      </div>
+      <div class="inventory-slots">
+        <div class="slot" id="slot-1" title="단서 1: 꼬마 유령의 오르골">👻</div>
+        <div class="slot" id="slot-2" title="단서 2: 찢어진 일기장">📜</div>
+        <div class="slot" id="slot-3" title="단서 3: 비밀 구리 열쇠">🗝️</div>
+      </div>
+    </section>
+
+    <!-- Main Content -->
     <main class="main-content">
-      <!-- 3D & AR Viewer Area -->
+      <!-- 3D / AR Viewer -->
       <section class="viewer-section">
         <div class="model-container" id="model-wrapper">
+          
+          <!-- Floating Mid-Air Ghost Visual Overlay -->
+          <div class="floating-ghost-overlay" id="ghost-sprite-layer">
+            <div class="ghost-card-floating">
+              <img src="/ghost.jpg" alt="공중에 떠있는 폐교 유령" class="ghost-img-animated" />
+              <div class="spectral-glow"></div>
+            </div>
+          </div>
+
           <model-viewer
             id="ar-viewer"
             src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
-            ios-src=""
-            alt="빈집 AR 전시 3D 오브젝트"
+            alt="폐교 미스터리 공중 유령 AR"
             ar
             ar-modes="webxr scene-viewer quick-look"
             camera-controls
             touch-action="pan-y"
             auto-rotate
-            shadow-intensity="1.5"
-            shadow-softness="1"
-            exposure="1.0"
-            ar-placement="floor"
+            shadow-intensity="2"
+            exposure="0.9"
+            ar-placement="wall"
             interaction-prompt="auto">
             
-            <button slot="ar-button" id="ar-trigger-btn" class="ar-floating-btn">
-              <span class="pulse-ring"></span>
+            <button slot="ar-button" id="ar-trigger-btn" class="ar-floating-btn haunted-btn">
+              <span class="ghost-pulse-ring"></span>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-              <span>📱 현장에서 AR 바닥 배치하기</span>
+              <span>🔮 카메라로 공중 유령 띄우기</span>
             </button>
-
-            <div id="ar-prompt">
-              <img src="https://modelviewer.dev/shared-assets/icons/hand.png" alt="AR 가이드">
-              <span>평평한 바닥이나 공간을 비춰보세요</span>
-            </div>
           </model-viewer>
 
-          <!-- Status Bar -->
+          <!-- Top Status Bar -->
           <div class="viewer-overlay-top">
-            <div class="status-chip" id="ar-compatibility">
-              <span class="status-dot"></span>
-              <span id="compatibility-text">WebXR AR 호환 가능</span>
+            <div class="status-chip spooky-chip">
+              <span class="status-dot green-glow"></span>
+              <span>공중 AR 모드 (Wall/Air Auto)</span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Exhibition Controls & Docent Info -->
+      <!-- Ghost Selection & Mysterious Clue Story -->
       <section class="control-section">
-        <!-- Exhibit Selector -->
+        <!-- Ghost Selector -->
         <div class="exhibit-selector">
-          <h2 class="section-title">전시 테마 선택</h2>
+          <h2 class="section-title">👻 심령 반응 탐지기 (유령 선택)</h2>
           <div class="exhibit-grid">
-            <button class="exhibit-card active" data-model="https://modelviewer.dev/shared-assets/models/Chair.glb" data-title="시간의 온기 (Classic Chair)" data-desc="빈집이 간직했던 과거의 따뜻한 가구 조각입니다. 바닥에 배치하여 이전의 훈훈했던 생활 공간을 복원해 보세요.">
-              <div class="card-icon">🪑</div>
+            <button class="exhibit-card active" data-clue-id="1" data-model="https://modelviewer.dev/shared-assets/models/Astronaut.glb" data-title="👻 1998년 꼬마 유령의 경고" data-desc="폐교 음악실 공중에 떠있는 꼬마 유령입니다. '밤 12시가 되면 오르골 소리가 들려...'">
+              <div class="card-icon">👻</div>
               <div class="card-info">
-                <h3>시간의 온기</h3>
-                <p>헤리티지 가구 복원</p>
+                <h3>1998년 꼬마 유령</h3>
+                <p>단서 #1: 음악실의 비밀 오르골</p>
               </div>
             </button>
 
-            <button class="exhibit-card" data-model="https://modelviewer.dev/shared-assets/models/Astronaut.glb" data-title="미래의 탐험가 (Space Pioneer)" data-desc="방치된 빈집이 미래의 창의적 공간으로 거듭남을 상징하는 현대적 디지털 조형물입니다.">
-              <div class="card-icon">👨‍🚀</div>
+            <button class="exhibit-card" data-clue-id="2" data-model="https://modelviewer.dev/shared-assets/models/Chair.glb" data-title="📜 도서관 귀신의 찢어진 일기장" data-desc="공중에 허공을 떠도는 오래된 낡은 의자와 일기장 조각입니다. '3번째 책장 뒤에 열쇠를 묻었다...'">
+              <div class="card-icon">📜</div>
               <div class="card-info">
-                <h3>미래의 탐험가</h3>
-                <p>디지털 아트 조형물</p>
+                <h3>도서관 귀신의 일기장</h3>
+                <p>단서 #2: 비밀 책장의 열쇠 위치</p>
               </div>
             </button>
 
-            <button class="exhibit-card" data-model="https://modelviewer.dev/shared-assets/models/plant.glb" data-title="초록의 숨결 (Botanical Plant)" data-desc="빈 공간에 새로운 생명력을 불어넣는 실내 버추얼 정원 오브젝트입니다.">
-              <div class="card-icon">🌿</div>
+            <button class="exhibit-card" data-clue-id="3" data-model="https://modelviewer.dev/shared-assets/models/plant.glb" data-title="🗝️ 덩굴에 얽힌 비밀 마법 열쇠" data-desc="폐교 강당 중앙 공중에 부유하는 녹슨 구리 열쇠입니다. 비밀번호는 [ 7 - 0 - 4 - 9 ]">
+              <div class="card-icon">🗝️</div>
               <div class="card-info">
-                <h3>초록의 숨결</h3>
-                <p>버추얼 실내 정원</p>
+                <h3>비밀 마법 구리 열쇠</h3>
+                <p>단서 #3: 강당의 최종 비밀번호</p>
               </div>
             </button>
           </div>
         </div>
 
-        <!-- Audio Docent Section -->
-        <div class="docent-card">
+        <!-- Clue Action & Docent Card -->
+        <div class="docent-card spooky-card">
           <div class="docent-header">
-            <div class="docent-badge">AUDIO DOCENT</div>
-            <h3 id="docent-title">시간의 온기 (Classic Chair)</h3>
+            <div class="docent-badge">MYSTERY CLUE</div>
+            <h3 id="docent-title">👻 1998년 꼬마 유령의 경고</h3>
           </div>
           <p id="docent-desc" class="docent-desc">
-            빈집이 간직했던 과거의 따뜻한 가구 조각입니다. 바닥에 배치하여 이전의 훈훈했던 생활 공간을 복원해 보세요.
+            폐교 음악실 공중에 떠있는 꼬마 유령입니다. "밤 12시가 되면 오르골 소리가 들려..."
           </p>
-          <div class="audio-controls">
-            <button id="btn-play-docent" class="btn btn-primary">
-              <svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              <span id="docent-btn-text">오디오 도슨트 듣기</span>
+          <div class="clue-action-bar">
+            <button id="btn-collect-clue" class="btn btn-spooky-primary full-width">
+              <span>🔍 유령에게서 단서 수집하기</span>
             </button>
-            <div class="audio-wave hidden" id="audio-wave">
-              <span></span><span></span><span></span><span></span><span></span>
-            </div>
+            <button id="btn-play-docent" class="btn btn-secondary">
+              <svg id="play-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>음성 힌트</span>
+            </button>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- QR Poster Modal for Host -->
-    <div id="qr-modal" class="modal-backdrop hidden">
-      <div class="modal-card">
+    <!-- Escape Complete Modal -->
+    <div id="escape-modal" class="modal-backdrop hidden">
+      <div class="modal-card spooky-modal">
         <div class="modal-header">
-          <h2>📌 현장용 QR 포스터 생성</h2>
+          <h2>🎉 폐교의 모든 단서 수집 완료!</h2>
+          <button id="btn-close-escape" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body text-center">
+          <div class="trophy-icon">🏆</div>
+          <p class="modal-intro">축하합니다! 폐교에 떠도는 모든 유령과 공중 단서를 발견했습니다.<br><br><strong class="highlight-code">최종 탈출 비밀번호: [ 7049 ]</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Poster Modal -->
+    <div id="qr-modal" class="modal-backdrop hidden">
+      <div class="modal-card spooky-modal">
+        <div class="modal-header">
+          <h2>📌 폐교 탐험용 QR 포스터</h2>
           <button id="btn-close-modal" class="close-btn">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="modal-intro">이 QR 코드를 인쇄하여 빈집 입구나 벽면에 붙여두세요.<br>방문자가 스마트폰으로 찍으면 즉시 이 AR 체험으로 연결됩니다.</p>
-
+          <p class="modal-intro">이 QR 코드를 폐교 입구나 복도에 붙여두세요.<br>방문자가 찍으면 공중에 유령이 나타나는 미스터리 게임이 시작됩니다.</p>
           <div class="qr-preview-box">
             <div id="qrcode-target"></div>
             <div class="qr-url-badge" id="current-url-display">https://...</div>
           </div>
-
           <div class="poster-preset-box">
-            <label for="custom-url-input">연결 URL 설정 (Vercel 배포 주소):</label>
-            <input type="url" id="custom-url-input" class="input-field" placeholder="https://your-app.vercel.app" />
+            <label for="custom-url-input">Vercel 배포 URL:</label>
+            <input type="url" id="custom-url-input" class="input-field" placeholder="https://vacant-house-ar.vercel.app" />
           </div>
         </div>
         <div class="modal-footer">
-          <button id="btn-download-qr" class="btn btn-primary full-width">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            <span>QR 코드 이미지 저장</span>
+          <button id="btn-download-qr" class="btn btn-spooky-primary full-width">
+            <span>QR 포스터 이미지 저장</span>
           </button>
         </div>
       </div>
