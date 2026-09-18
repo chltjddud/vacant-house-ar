@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     collectedLetters: 0,
     hasStamp: false,
     branchChoice: 'market',
-    userVote: null
+    userVote: null,
+    ghostAffinity: 0
   };
 
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -67,6 +68,27 @@ document.addEventListener('DOMContentLoaded', () => {
     stepperLabel.textContent = stageTitles[state.currentStage] || `${state.currentStage}단계`;
     inventorySummary.textContent = `수집 편지 ${state.collectedLetters}/3 · 스탬프 ${state.hasStamp ? '1개' : '0개'}`;
 
+    // Stage 2 Affinity Restore
+    const affinityValText = document.getElementById('affinity-val-text');
+    const affinityFillBar = document.getElementById('affinity-fill-bar');
+    const btnNextStage2 = document.getElementById('btn-next-stage-2');
+    const stage2Reward = document.getElementById('stage-2-reward');
+
+    if (affinityValText && affinityFillBar) {
+      affinityValText.textContent = `${state.ghostAffinity}%`;
+      affinityFillBar.style.width = `${state.ghostAffinity}%`;
+    }
+
+    if (state.ghostAffinity >= 100) {
+      if (btnNextStage2) {
+        btnNextStage2.removeAttribute('disabled');
+        btnNextStage2.querySelector('span').textContent = '골목길로 이동하여 단서 찾기';
+      }
+      if (stage2Reward) {
+        stage2Reward.classList.remove('hidden');
+      }
+    }
+
     // Dynamic Branch Content for Stage 5
     const stage5Title = document.getElementById('stage-5-title');
     const stage5Desc = document.getElementById('stage-5-desc');
@@ -120,9 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateMissionPreview() {
     if (state.companion.includes('어린이')) {
-      aiMissionText.textContent = `"${state.companion}과 함께하는 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 외벽을 비춰보세요."`;
+      aiMissionText.textContent = `"${state.companion}과 함께하는 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 공중 수호 유령과 대화를 나누어 보세요."`;
     } else {
-      aiMissionText.textContent = `"${state.companion}을 위한 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 과거의 문을 열어보세요."`;
+      aiMissionText.textContent = `"${state.companion}을 위한 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 공중 수호 유령을 만나보세요."`;
     }
   }
 
@@ -130,18 +152,71 @@ document.addEventListener('DOMContentLoaded', () => {
     onboardingForm.addEventListener('submit', (e) => {
       e.preventDefault();
       state.currentStage = 2;
-      state.collectedLetters = 1; // First letter fragment collected
       saveState();
-      playDocent("첫 번째 빈집에 도착했습니다. 외벽을 비추면 과거 잡화점의 모습이 나타납니다.");
+      playDocent("첫 번째 빈집에 도착했습니다. 공중에 떠있는 수호 유령과 교감하여 첫 퀘스트를 받아보세요.");
     });
   }
 
-  // 4. Stage 2 Logic (First Vacant House)
+  // 4. Stage 2 Logic (Interactive 3D Ghost & Quest Assignment)
+  const viewerStage2 = document.getElementById('viewer-stage-2');
+  const ghostDialogText = document.getElementById('ghost-dialog-text');
+  const btnPetGhost = document.getElementById('btn-pet-ghost');
+  const btnFeedGhost = document.getElementById('btn-feed-ghost');
+  const btnVoiceGhost = document.getElementById('btn-voice-ghost');
   const btnNextStage2 = document.getElementById('btn-next-stage-2');
+
+  function addAffinity(amount, dialogText) {
+    state.ghostAffinity = Math.min(100, state.ghostAffinity + amount);
+    if (ghostDialogText) {
+      ghostDialogText.textContent = dialogText;
+    }
+    playDocent(dialogText);
+
+    // Bounce model viewer rotation slightly
+    if (viewerStage2) {
+      viewerStage2.cameraOrbit = `${Math.random() * 60 - 30}deg 75deg 2.5m`;
+    }
+
+    if (state.ghostAffinity >= 100) {
+      state.collectedLetters = Math.max(1, state.collectedLetters);
+      setTimeout(() => {
+        if (ghostDialogText) {
+          ghostDialogText.textContent = `"와아! 저와 최고의 친구가 되셨어요! 우체부 아저씨가 남겨둔 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!"`;
+        }
+        playDocent("와아! 저와 최고의 친구가 되셨어요! 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!");
+      }, 800);
+    }
+    saveState();
+  }
+
+  // Touch directly on 3D Viewer
+  if (viewerStage2) {
+    viewerStage2.addEventListener('click', () => {
+      addAffinity(35, `"간지러워요! 히히~ 저는 50년 동안 이 빈집을 지켜온 꼬마 유령이에요."`);
+    });
+  }
+
+  if (btnPetGhost) {
+    btnPetGhost.addEventListener('click', () => {
+      addAffinity(35, `"쓰다듬어주니 마음이 따뜻해져요. 우체부 아저씨의 잃어버린 편지를 찾고 계시죠?"`);
+    });
+  }
+
+  if (btnFeedGhost) {
+    btnFeedGhost.addEventListener('click', () => {
+      addAffinity(35, `"달콤한 별가루 선물 정말 고마워요! 영혼의 에너지가 가득 찼어요!"`);
+    });
+  }
+
+  if (btnVoiceGhost) {
+    btnVoiceGhost.addEventListener('click', () => {
+      addAffinity(35, `"우리 마을을 찾아온 가족의 따뜻한 목소리가 들려요! 편지의 흔적을 알려드릴게요."`);
+    });
+  }
+
   if (btnNextStage2) {
     btnNextStage2.addEventListener('click', () => {
       state.currentStage = 3;
-      state.collectedLetters = 2; // Second letter fragment collected
       saveState();
       playDocent("골목길 바닥을 비춰 우체부의 옛 발자국을 따라가세요.");
     });
@@ -152,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnNextStage3) {
     btnNextStage3.addEventListener('click', () => {
       state.currentStage = 4;
+      state.collectedLetters = Math.max(2, state.collectedLetters);
       saveState();
       playDocent("두 번째 빈집에 도착했습니다. 우체부가 향했던 길을 선택해 주세요.");
     });
@@ -166,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.branchChoice = 'market';
       state.currentStage = 5;
       state.hasStamp = true;
-      state.collectedLetters = 3; // Final letter fragment collected
+      state.collectedLetters = 3;
       saveState();
       playDocent("활기찬 전통 오일장 시장 코스로 이동합니다. 제휴 상점 쿠폰이 발급되었습니다.");
     });
@@ -177,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.branchChoice = 'school';
       state.currentStage = 5;
       state.hasStamp = true;
-      state.collectedLetters = 3; // Final letter fragment collected
+      state.collectedLetters = 3;
       saveState();
       playDocent("추억의 옛 분교 학교 코스로 이동합니다. 제휴 상점 쿠폰이 발급되었습니다.");
     });
@@ -227,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
       votingContainer.classList.add('hidden');
       voteResultBox.classList.remove('hidden');
 
-      // Animate chart bars
       setTimeout(() => {
         const fills = {
           garden: document.getElementById('fill-garden'),
@@ -272,7 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
           collectedLetters: 0,
           hasStamp: false,
           branchChoice: 'market',
-          userVote: null
+          userVote: null,
+          ghostAffinity: 0
         };
         saveState();
       }

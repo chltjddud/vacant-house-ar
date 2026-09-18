@@ -13,8 +13,8 @@
   
   <!-- Model Viewer Component -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-  <script type="module" crossorigin src="/assets/index-Qc22OsCq.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-FCX1HRnc.css">
+  <script type="module" crossorigin src="/assets/index-Dmyj_ceT.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-HAE6eAoG.css">
 </head>
 <body>
   <div id="app" class="village-quest-app">
@@ -99,7 +99,7 @@
                 <span>AI가 생성한 우리 가족 첫 번째 미션</span>
               </div>
               <p class="preview-text" id="ai-mission-text">
-                "승평마을에서 오래전 전해지지 못한 옛 편지 한 통이 발견되었습니다. 첫 번째 빈집으로 이동하여 외벽을 비춰보세요."
+                "승평마을 첫 번째 빈집에 도달하여, 공중에 떠있는 수호 유령과 대화를 나누고 퀘스트를 부여받으세요."
               </p>
             </div>
 
@@ -111,58 +111,87 @@
         </div>
       </section>
 
-      <!-- STAGE 2: 첫 번째 빈집 - AR 과거 복원 -->
+      <!-- STAGE 2: 첫 번째 빈집 - 공중 3D 유령 상호작용 & 퀘스트 수락 -->
       <section id="stage-2" class="quest-stage">
         <div class="stage-card">
           <div class="stage-badge">STAGE 2 · 첫 번째 빈집</div>
-          <h2 class="stage-title">외벽 너머로 과거의 집을 복원하다</h2>
+          <h2 class="stage-title">빈집 수호 유령과의 대화 & 첫 번째 퀘스트</h2>
           <p class="stage-desc">
-            안전을 위해 건물 안으로 들어가지 마세요! 외벽을 비추면 AR로 과거 1970년대의 따뜻한 가게 모습이 되살아납니다.
+            빈집 마당 공중에 둥실둥실 떠있는 수호 유령이 나타났습니다! 유령과 상호작용하여 친밀도를 쌓고 첫 미션을 받아보세요.
           </p>
 
-          <!-- 3D AR Scene Box -->
-          <div class="ar-scene-container">
+          <!-- 3D Ghost AR Viewer -->
+          <div class="ar-scene-container" id="ghost-interactive-box">
             <model-viewer
               id="viewer-stage-2"
               src="/real_ghost.glb"
-              alt="과거 승평마을 가게 복원 3D"
+              alt="빈집 수호 3D 유령 모델"
               ar
               ar-modes="webxr scene-viewer quick-look"
               camera-controls
               auto-rotate
               shadow-intensity="1.5"
-              exposure="1.1"
+              exposure="1.15"
               ar-placement="wall">
               <button slot="ar-button" class="ar-overlay-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-                <span>현장 외벽에 AR 복원 띄우기</span>
+                <span>카메라로 공중 유령 띄우기</span>
               </button>
             </model-viewer>
+
+            <div class="ghost-interactive-hint">
+              <span>화면 속 유령을 직접 터치해 보세요!</span>
+            </div>
+          </div>
+
+          <!-- Ghost Affinity & Interaction Controls -->
+          <div class="ghost-interaction-panel">
+            <div class="affinity-header">
+              <span class="affinity-title">유령과의 친밀도</span>
+              <span class="affinity-val" id="affinity-val-text">0%</span>
+            </div>
+            <div class="affinity-track">
+              <div class="affinity-fill" id="affinity-fill-bar" style="width: 0%"></div>
+            </div>
+
+            <!-- Interaction Buttons -->
+            <div class="interaction-btn-grid">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-pet-ghost">
+                <span>👋 유령 톡톡 건드리기</span>
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-feed-ghost">
+                <span>⭐ 별가루 선물하기</span>
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-voice-ghost">
+                <span>🗣️ 목소리 들려주기</span>
+              </button>
+            </div>
           </div>
 
           <!-- Character Dialog Box -->
           <div class="dialogue-box">
             <div class="dialogue-avatar">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8v12l3-3 3 3 2-2 2 2 3-3 3 3V10a8 8 0 0 0-8-8z"></path><circle cx="9" cy="10" r="1"></circle><circle cx="15" cy="10" r="1"></circle></svg>
             </div>
             <div class="dialogue-content">
-              <div class="speaker-name">가상의 옛 주민 할아버지</div>
-              <p class="speaker-text">
-                "어서 오너라. 나는 이곳에서 작은 잡화점을 운영했단다. 오래전 우체부가 골목 쪽으로 급히 걸어가며 바닥에 표식을 남겼지. 골목길로 가보렴."
+              <div class="speaker-name">빈집 수호 꼬마 유령</div>
+              <p class="speaker-text" id="ghost-dialog-text">
+                "안녕! 나는 이 오래된 빈집을 지키고 있는 꼬마 유령이야. 우리 친해지면 우체부 아저씨가 남겨둔 비밀 편지 조각을 줄게!"
               </p>
             </div>
           </div>
 
-          <div class="clue-reward-card">
+          <!-- Reward Card (Revealed upon affinity completion) -->
+          <div class="clue-reward-card hidden" id="stage-2-reward">
             <div class="reward-icon">✉️</div>
             <div class="reward-info">
-              <h4>첫 번째 편지 조각 획득</h4>
+              <h4>첫 번째 편지 조각 & 퀘스트 부여</h4>
               <p>"친애하는 영희에게... 승평마을의 가을은..."</p>
             </div>
           </div>
 
-          <button id="btn-next-stage-2" class="btn btn-primary btn-large">
-            <span>골목길로 이동하여 단서 찾기</span>
+          <button id="btn-next-stage-2" class="btn btn-primary btn-large" disabled>
+            <span>유령과 친해져서 퀘스트 받기</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </button>
         </div>
