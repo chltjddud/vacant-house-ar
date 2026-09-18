@@ -13,8 +13,8 @@
   
   <!-- Model Viewer Component -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-  <script type="module" crossorigin src="/assets/index-20B9U4Ti.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BZGzXoXV.css">
+  <script type="module" crossorigin src="/assets/index-D5-lC6K_.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CPrTnYzH.css">
 </head>
 <body>
   <div id="app" class="village-quest-app">
@@ -196,8 +196,22 @@
             **카메라로 골목 바닥을 비추면 과거 우체부의 황금빛 발자국이 AR로 나타납니다.** 발자국을 하나씩 밟아가며 숨겨진 힌트를 발견하세요!
           </p>
 
-          <!-- Live Camera Floor AR Viewport -->
-          <div class="camera-ar-viewport" id="camera-ar-box-3">
+          <!-- Stage 3 Footprint Search Launcher Card (Visible initially before camera activates) -->
+          <div class="footprint-launcher-card" id="footprint-launcher-card">
+            <div class="footprint-launcher-icon">
+              <span class="compass-spin">🧭</span>
+            </div>
+            <h3>바닥 AR 발자국 레이더 가동</h3>
+            <p>골목길 바닥을 비추어 옛 우체부의 황금빛 발자국을 증강현실(AR)로 찾아보세요!</p>
+            <button type="button" class="btn btn-primary btn-large btn-footprint-start" id="btn-start-footprint-cam">
+              <span class="cam-btn-icon">👣</span>
+              <span>발자국 찾기 (카메라 켜기)</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </button>
+          </div>
+
+          <!-- Live Camera Floor AR Viewport (Revealed upon clicking "발자국 찾기") -->
+          <div class="camera-ar-viewport hidden" id="camera-ar-box-3">
             <video id="live-camera-video-3" class="live-camera-video" autoplay playsinline muted></video>
 
             <!-- AR Floor Footprint Layer (Perspective SVG overlay on live camera ground) -->

@@ -2,7 +2,7 @@ import QRCode from 'qrcode';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Quest State & LocalStorage
-  const STORAGE_KEY = 'seungpyeong_ar_quest_state_v1';
+  const STORAGE_KEY = 'seungpyeong_ar_quest_state_v2';
   let state = {
     currentStage: 1,
     companion: '가족 (어린이 포함)',
@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const camAffinityFill = document.getElementById('cam-affinity-fill');
     const btnNextStage2 = document.getElementById('btn-next-stage-2');
     const stage2Reward = document.getElementById('stage-2-reward');
+    const camSpeechTextEl = document.getElementById('cam-speech-text');
 
     if (camAffinityText && camAffinityFill) {
       camAffinityText.textContent = `${state.ghostAffinity}%`;
@@ -87,14 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         btnNextStage2.setAttribute('disabled', 'true');
         btnNextStage2.querySelector('span').textContent = `유령과 친해져서 퀘스트 받기 (${state.ghostAffinity}%)`;
+        if (stage2Reward) stage2Reward.classList.add('hidden');
+        if (camSpeechTextEl && state.ghostAffinity === 0) {
+          camSpeechTextEl.textContent = '"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"';
+        }
       }
     }
 
-    // Stage 3 Footstep Progress HUD
+    // Stage 3 Footstep Progress HUD & Elements
     const footstepCountText = document.getElementById('footstep-count-text');
     const footstepFillBar = document.getElementById('footstep-fill-bar');
     const btnNextStage3 = document.getElementById('btn-next-stage-3');
     const stage3Reward = document.getElementById('stage-3-reward');
+    const footprintLauncherCard = document.getElementById('footprint-launcher-card');
+    const cameraArBox3 = document.getElementById('camera-ar-box-3');
 
     if (footstepCountText && footstepFillBar) {
       const pct = Math.round((state.footstepProgress / 3) * 100);
@@ -141,7 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.currentStage === 2) {
       startLiveCamera('live-camera-video-2');
     } else if (state.currentStage === 3) {
-      startLiveCamera('live-camera-video-3');
+      // In Stage 3, if camera viewport is already revealed, keep camera alive
+      if (cameraArBox3 && !cameraArBox3.classList.contains('hidden')) {
+        startLiveCamera('live-camera-video-3');
+      }
     } else {
       stopLiveCamera();
     }
@@ -208,6 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (onboardingForm) {
     onboardingForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      state.ghostAffinity = 0;
+      state.footstepProgress = 0;
+      state.collectedLetters = 0;
       state.currentStage = 2;
       saveState();
       playDocent("첫 번째 빈집에 도착했습니다. 카메라 화면 속 유령과 교감하여 첫 퀘스트를 받아보세요.");
@@ -216,25 +229,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 4. Camera Stream Utility
   async function startLiveCamera(videoId) {
-    if (cameraStream) {
-      const vid = document.getElementById(videoId);
-      if (vid && vid.srcObject !== cameraStream) {
-        vid.srcObject = cameraStream;
-        vid.play().catch(() => {});
-      }
+    const vid = document.getElementById(videoId);
+    if (!vid) return;
+
+    if (cameraStream && vid.srcObject === cameraStream) {
+      try { await vid.play(); } catch (e) {}
       return;
     }
+
+    stopLiveCamera();
+
     try {
       const constraints = {
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
       };
       cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-      const vid = document.getElementById(videoId);
-      if (vid) {
-        vid.srcObject = cameraStream;
-        await vid.play();
-      }
+      vid.srcObject = cameraStream;
+      vid.setAttribute('playsinline', '');
+      vid.setAttribute('autoplay', '');
+      vid.setAttribute('muted', '');
+      await vid.play();
     } catch (err) {
       console.warn('Camera access denied or unavailable:', err);
     }
@@ -271,10 +286,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1200);
   }
 
-  function addAffinity(amount, dialogText, emoji = '❤️') {
+  function addAffinity(amount = 25, emoji = '❤️') {
+    if (state.ghostAffinity >= 100) return;
+
     state.ghostAffinity = Math.min(100, state.ghostAffinity + amount);
-    if (camSpeechText) camSpeechText.textContent = dialogText;
-    playDocent(dialogText);
+
+    let currentDialog = '';
+    if (state.ghostAffinity >= 100) {
+      currentDialog = `"와아! 친밀도 100% 달성! 우체부 아저씨의 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!"`;
+    } else if (state.ghostAffinity === 75) {
+      currentDialog = `"이제 거의 다 친해졌어요! 조금만 더 교감해 주세요!"`;
+    } else if (state.ghostAffinity === 50) {
+      currentDialog = `"따뜻한 마음이 전해져요! 점점 기운이 솟아나고 있어요!"`;
+    } else {
+      currentDialog = `"헤헤, 간지러워요! 여러분이 절 알아봐 줘서 정말 기뻐요!"`;
+    }
+
+    if (camSpeechText) camSpeechText.textContent = currentDialog;
+    playDocent(currentDialog);
 
     spawnParticle(particleContainer2, emoji);
     spawnParticle(particleContainer2, emoji);
@@ -285,50 +314,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (state.ghostAffinity >= 100) {
       state.collectedLetters = Math.max(1, state.collectedLetters);
-      setTimeout(() => {
-        if (camSpeechText) {
-          camSpeechText.textContent = `"와아! 친밀도 100% 달성! 우체부 아저씨의 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!"`;
-        }
-        playDocent("와아! 친밀도 100% 달성! 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!");
-        spawnParticle(particleContainer2, '🎉');
-        spawnParticle(particleContainer2, '✉️');
-      }, 700);
+      spawnParticle(particleContainer2, '🎉');
+      spawnParticle(particleContainer2, '✉️');
     }
     saveState();
   }
 
   if (viewerStage2) {
     viewerStage2.addEventListener('click', () => {
-      addAffinity(35, `"간지러워요! 히히~ 카메라 너머로 여러분의 손길이 느껴져요!"`, '✨');
+      addAffinity(25, '✨');
     });
   }
 
   if (btnCamPet) {
     btnCamPet.addEventListener('click', (e) => {
       e.stopPropagation();
-      addAffinity(35, `"쓰다듬어주니 기분이 너무 좋아요! 우체부 아저씨의 비밀을 알려드릴게요."`, '❤️');
+      addAffinity(25, '❤️');
     });
   }
 
   if (btnCamFeed) {
     btnCamFeed.addEventListener('click', (e) => {
       e.stopPropagation();
-      addAffinity(35, `"달콤한 별가루 선물 정말 고마워요! 영혼의 에너지가 불끈 솟아나요!"`, '⭐');
+      addAffinity(25, '⭐');
     });
   }
 
   if (btnCamVoice) {
     btnCamVoice.addEventListener('click', (e) => {
       e.stopPropagation();
-      addAffinity(35, `"따뜻한 목소리가 들려요! 편지를 찾아 승평마을을 구해줄 분들이군요!"`, '🗣️');
+      addAffinity(25, '🗣️');
     });
   }
 
   if (btnNextStage2) {
     btnNextStage2.addEventListener('click', () => {
+      stopLiveCamera();
       state.currentStage = 3;
       saveState();
-      playDocent("골목길 바닥을 비춰 우체부의 옛 발자국을 따라가세요.");
+      playDocent("골목길에 도착했습니다. 발자국 찾기 버튼을 눌러 바닥의 옛 흔적을 찾아보세요.");
     });
   }
 
@@ -336,12 +360,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const floorHintText = document.getElementById('floor-hint-text');
   const btnStepForward = document.getElementById('btn-step-forward');
   const btnNextStage3 = document.getElementById('btn-next-stage-3');
+  const btnStartFootprintCam = document.getElementById('btn-start-footprint-cam');
+  const footprintLauncherCard = document.getElementById('footprint-launcher-card');
+  const cameraArBox3 = document.getElementById('camera-ar-box-3');
+
+  // "발자국 찾기" (카메라 켜기) 버튼 클릭 핸들러
+  if (btnStartFootprintCam) {
+    btnStartFootprintCam.addEventListener('click', async () => {
+      if (footprintLauncherCard) footprintLauncherCard.classList.add('hidden');
+      if (cameraArBox3) cameraArBox3.classList.remove('hidden');
+      await startLiveCamera('live-camera-video-3');
+      playDocent("카메라로 바닥을 비추며 황금빛 우체부 발자국을 따라가세요.");
+    });
+  }
 
   const footprintClues = [
-    "바닥 단서 1: 바닥에서 1978년 승평우체국 소인이 찍힌 낡은 우표 조각 발견!",
+    "바닥 단서 1: 1978년 승평우체국 소인이 찍힌 낡은 우표 조각 발견!",
     "바닥 단서 2: '빨간 대문 앞 돌담 틈새를 확인하라'는 우체부의 옛 메모 발견!",
     "목적지 도착! 빨간 대문 우편함에서 두 번째 편지 조각을 찾았습니다!"
   ];
+
+  let isAutoTransitioning = false;
 
   function stepFootprint(stepNum) {
     if (stepNum > state.footstepProgress + 1) return;
@@ -349,14 +388,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     state.footstepProgress = Math.min(3, state.footstepProgress + 1);
     const clueText = footprintClues[state.footstepProgress - 1];
-    
+
     if (floorHintText) floorHintText.textContent = clueText;
     playDocent(clueText);
 
     if (state.footstepProgress >= 3) {
       state.collectedLetters = Math.max(2, state.collectedLetters);
+      saveState();
+
+      if (floorHintText) {
+        floorHintText.textContent = `"모든 발자국을 찾았습니다! 두 번째 빈집으로 이동합니다..."`;
+      }
+      playDocent("우체부의 발자국을 모두 따라왔습니다! 두 번째 빈집으로 이동합니다.");
+
+      // Automatically move to Stage 4 after following all footprints
+      if (!isAutoTransitioning) {
+        isAutoTransitioning = true;
+        setTimeout(() => {
+          if (state.currentStage === 3) {
+            stopLiveCamera();
+            state.currentStage = 4;
+            saveState();
+            playDocent("두 번째 빈집에 도착했습니다. 우체부가 향했던 길을 선택해 주세요.");
+          }
+          isAutoTransitioning = false;
+        }, 2000);
+      }
+    } else {
+      saveState();
     }
-    saveState();
   }
 
   // Click on footprint nodes
@@ -375,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnNextStage3) {
     btnNextStage3.addEventListener('click', () => {
+      stopLiveCamera();
       state.currentStage = 4;
       saveState();
       playDocent("두 번째 빈집에 도착했습니다. 우체부가 향했던 길을 선택해 주세요.");
