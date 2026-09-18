@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const collectedClues = new Set();
   let isSpeechPlaying = false;
 
-  // Set initial 3D Ghost GLB Model to User's Nintendo Boo Ghost
-  arViewer.src = '/nintendo_boo.glb';
+  // Set initial 3D Ghost GLB Model to real_ghost.glb
+  arViewer.src = '/real_ghost.glb';
 
   // 1. Exhibit & 3D Ghost Selector
   exhibitCards.forEach(card => {

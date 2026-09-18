@@ -13,7 +13,7 @@
   
   <!-- Model Viewer Component -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-  <script type="module" crossorigin src="/assets/index-DDEj05t5.js"></script>
+  <script type="module" crossorigin src="/assets/index-v0_0hLir.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-tnk62MSC.css">
 </head>
 <body>
@@ -39,7 +39,7 @@
         <span class="inventory-count" id="clue-progress-text">0 / 3 수집 완료</span>
       </div>
       <div class="inventory-slots">
-        <div class="slot" id="slot-1" title="단서 1: 닌텐도 부우 유령">
+        <div class="slot" id="slot-1" title="단서 1: 꼬마 유령의 오르골">
           <span class="slot-num">01</span>
         </div>
         <div class="slot" id="slot-2" title="단서 2: 찢어진 일기장">
@@ -59,15 +59,15 @@
           
           <model-viewer
             id="ar-viewer"
-            src="/nintendo_boo.glb"
-            alt="닌텐도 부우 3D 유령 모델 AR"
+            src="/real_ghost.glb"
+            alt="폐교 3D 유령 모델 AR"
             ar
             ar-modes="webxr scene-viewer quick-look"
             camera-controls
             touch-action="pan-y"
             auto-rotate
-            shadow-intensity="2"
-            exposure="1.2"
+            shadow-intensity="1.5"
+            exposure="1.15"
             ar-placement="wall"
             interaction-prompt="auto">
             
@@ -82,7 +82,7 @@
           <div class="viewer-overlay-top">
             <div class="status-chip spooky-chip">
               <span class="status-dot green-glow"></span>
-              <span id="model-status-text">Nintendo Ghost 3D GLB Active</span>
+              <span id="model-status-text">3D Ghost Model Loaded (Mid-Air AR)</span>
             </div>
           </div>
         </div>
@@ -94,32 +94,32 @@
         <div class="exhibit-selector">
           <h2 class="section-title">심령 반응 탐지기 (3D 유령 선택)</h2>
           <div class="exhibit-grid">
-            <button class="exhibit-card active" data-clue-id="1" data-model="/nintendo_boo.glb" data-title="닌텐도 부우 3D 유령의 경고" data-desc="사용자 지정 닌텐도 3D 부우 유령 모델입니다. 폐교 음악실 공중에 부유하며 '밤 12시가 되면 오르골 소리가 들려...'라고 경고합니다.">
+            <button class="exhibit-card active" data-clue-id="1" data-model="/real_ghost.glb" data-title="1998년 꼬마 유령의 경고" data-desc="손을 흔들며 공중에 떠있는 귀여운 3D 유령입니다. '밤 12시가 되면 음악실에서 오르골 소리가 들려...'">
               <div class="card-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8v12l3-3 3 3 2-2 2 2 3-3 3 3V10a8 8 0 0 0-8-8z"></path><circle cx="9" cy="10" r="1"></circle><circle cx="15" cy="10" r="1"></circle></svg>
               </div>
               <div class="card-info">
-                <h3>닌텐도 부우 3D 유령 (Custom GLB)</h3>
+                <h3>1998년 꼬마 3D 유령</h3>
                 <p>단서 #1: 음악실의 비밀 오르골</p>
               </div>
             </button>
 
-            <button class="exhibit-card" data-clue-id="2" data-model="/ghost2.glb" data-title="도서관 귀신의 찢어진 일기장" data-desc="공중에 떠도는 3D 심령 유령 캐릭터입니다. '3번째 책장 뒤에 열쇠를 묻었다...'">
+            <button class="exhibit-card" data-clue-id="2" data-model="/real_ghost_mint.glb" data-title="도서관 귀신의 찢어진 일기장" data-desc="민트빛 영혼의 기운을 품고 공중에 떠도는 3D 유령입니다. '3번째 책장 뒤에 열쇠를 묻었다...'">
               <div class="card-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
               </div>
               <div class="card-info">
-                <h3>도서관 3D 유령 (Ghost B)</h3>
+                <h3>도서관 민트 3D 유령</h3>
                 <p>단서 #2: 비밀 책장의 열쇠 위치</p>
               </div>
             </button>
 
-            <button class="exhibit-card" data-clue-id="3" data-model="/ghost3.glb" data-title="비밀 마법 구리 열쇠" data-desc="폐교 강당 중앙 공중에 부유하는 3D 유령입니다. 비밀번호는 [ 7 - 0 - 4 - 9 ]">
+            <button class="exhibit-card" data-clue-id="3" data-model="/real_ghost_purple.glb" data-title="비밀 마법 구리 열쇠" data-desc="신비로운 보랏빛 오라를 내뿜으며 공중에 부유하는 3D 유령입니다. 비밀번호는 [ 7 - 0 - 4 - 9 ]">
               <div class="card-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
               </div>
               <div class="card-info">
-                <h3>강당 3D 유령 (Ghost C)</h3>
+                <h3>강당 퍼플 3D 유령</h3>
                 <p>단서 #3: 강당의 최종 비밀번호</p>
               </div>
             </button>
@@ -130,10 +130,10 @@
         <div class="docent-card spooky-card">
           <div class="docent-header">
             <div class="docent-badge">MYSTERY CLUE</div>
-            <h3 id="docent-title">닌텐도 부우 3D 유령의 경고</h3>
+            <h3 id="docent-title">1998년 꼬마 유령의 경고</h3>
           </div>
           <p id="docent-desc" class="docent-desc">
-            사용자 지정 닌텐도 3D 부우 유령 모델입니다. 폐교 음악실 공중에 부유하며 "밤 12시가 되면 오르골 소리가 들려..."라고 경고합니다.
+            손을 흔들며 공중에 떠있는 귀여운 3D 유령입니다. "밤 12시가 되면 음악실에서 오르골 소리가 들려..."
           </p>
           <div class="clue-action-bar">
             <button id="btn-collect-clue" class="btn btn-spooky-primary full-width">
