@@ -239,11 +239,6 @@ body {
   font-size: 1rem;
 }
 
-.btn-sm {
-  padding: 8px 12px;
-  font-size: 0.8rem;
-}
-
 .btn-primary {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
@@ -265,10 +260,6 @@ body {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-main);
   border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.16);
 }
 
 .full-width {
@@ -343,155 +334,215 @@ body {
   color: #e2e8f0;
 }
 
-/* Stage 2: 3D AR Box & Ghost Interaction */
-.ar-scene-container {
+/* Stage 2: LIVE CAMERA AR VIEWPORT & HUD OVERLAY */
+.camera-ar-viewport {
   width: 100%;
-  height: 320px;
-  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-  border: 1px solid var(--border-color);
+  height: 460px;
+  position: relative;
+  background: #000000;
+  border: 2px solid var(--accent-teal);
   border-radius: var(--radius-md);
   overflow: hidden;
-  position: relative;
-  cursor: pointer;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
 }
 
-.ghost-interactive-hint {
+.live-camera-video {
   position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--accent-teal);
-  color: var(--accent-teal);
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  pointer-events: none;
-  animation: pulseHint 2s infinite ease-in-out;
-}
-
-@keyframes pulseHint {
-  0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
-  50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
-}
-
-model-viewer {
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  z-index: 1;
 }
 
-.ar-overlay-btn {
+.camera-3d-layer {
   position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, var(--accent-teal) 0%, #059669 100%);
-  color: #04120c;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 30px;
-  font-weight: 800;
-  font-size: 0.88rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-  white-space: nowrap;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  --poster-color: transparent;
+  background-color: transparent;
+  pointer-events: auto;
 }
 
-/* Ghost Interaction Panel & Affinity Bar */
-.ghost-interaction-panel {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
+.particle-container {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.floating-particle {
+  position: absolute;
+  font-size: 1.8rem;
+  animation: floatUpFade 1.2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes floatUpFade {
+  0% { transform: translateY(0) scale(0.6); opacity: 1; }
+  100% { transform: translateY(-80px) scale(1.4); opacity: 0; }
+}
+
+/* Camera HUD Overlay (Top & Bottom) */
+.camera-hud-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  justify-content: space-between;
+  padding: 14px;
+  pointer-events: none;
 }
 
-.affinity-header {
+/* Top Affinity Bar directly on Camera Screen */
+.camera-affinity-hud {
+  background: rgba(12, 16, 23, 0.82);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--accent-pink);
+  border-radius: 30px;
+  padding: 8px 16px;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35);
+  pointer-events: auto;
+  align-self: center;
+  width: 90%;
+  max-width: 380px;
+}
+
+.hud-affinity-label {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
-.affinity-title {
+.hud-title {
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.hud-val {
   color: var(--accent-pink);
+  font-size: 0.9rem;
 }
 
-.affinity-val {
-  color: var(--accent-teal);
+.heart-pulse {
+  animation: heartBeat 1.4s infinite;
+  display: inline-block;
 }
 
-.affinity-track {
-  height: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+.hud-affinity-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
   overflow: hidden;
 }
 
-.affinity-fill {
+.hud-affinity-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-pink) 0%, var(--accent-teal) 100%);
-  border-radius: 8px;
+  background: linear-gradient(90deg, #ec4899 0%, #10b981 100%);
+  border-radius: 6px;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+  box-shadow: 0 0 10px #ec4899;
 }
 
-.interaction-btn-grid {
-  display: flex;
-  gap: 8px;
-  justify-content: space-between;
-}
-
-.interaction-btn-grid .btn {
-  flex: 1;
-}
-
-/* Character Dialogue Box */
-.dialogue-box {
-  display: flex;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 14px;
-}
-
-.dialogue-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(16, 185, 129, 0.15);
+/* Camera Speech Bubble */
+.camera-ghost-speech-bubble {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--accent-teal);
-  color: var(--accent-teal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin: 0 auto;
+  width: 92%;
+  max-width: 420px;
+  pointer-events: auto;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  text-align: center;
 }
 
-.dialogue-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.speaker-name {
-  font-size: 0.78rem;
+.ghost-bubble-name {
+  font-size: 0.72rem;
   font-weight: 800;
   color: var(--accent-teal);
+  display: block;
+  margin-bottom: 2px;
 }
 
-.speaker-text {
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: var(--text-main);
+.camera-ghost-speech-bubble p {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #f8fafc;
+}
+
+/* Camera Bottom Action Controls */
+.camera-action-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  pointer-events: auto;
+  padding-bottom: 4px;
+}
+
+.cam-btn {
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 30px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.cam-btn:hover, .cam-btn:active {
+  background: rgba(16, 185, 129, 0.35);
+  border-color: var(--accent-teal);
+  transform: scale(1.05);
+}
+
+.cam-btn-icon {
+  font-size: 1rem;
+}
+
+.camera-toggle-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  color: var(--accent-teal);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 /* Clue Reward Card */

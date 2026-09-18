@@ -98,7 +98,7 @@
                 <span>AI가 생성한 우리 가족 첫 번째 미션</span>
               </div>
               <p class="preview-text" id="ai-mission-text">
-                "승평마을 첫 번째 빈집에 도달하여, 공중에 떠있는 수호 유령과 대화를 나누고 퀘스트를 부여받으세요."
+                "승평마을 첫 번째 빈집에 도착하여, 카메라를 켜고 공중 수호 유령과 교감하며 친밀도를 쌓아보세요."
               </p>
             </div>
 
@@ -110,73 +110,77 @@
         </div>
       </section>
 
-      <!-- STAGE 2: 첫 번째 빈집 - 공중 3D 유령 상호작용 & 퀘스트 수락 -->
+      <!-- STAGE 2: 첫 번째 빈집 - 카메라 켜진 상태에서 유령과 실시간 상호작용 & 친밀도 HUD -->
       <section id="stage-2" class="quest-stage">
         <div class="stage-card">
           <div class="stage-badge">STAGE 2 · 첫 번째 빈집</div>
-          <h2 class="stage-title">빈집 수호 유령과의 대화 & 첫 번째 퀘스트</h2>
+          <h2 class="stage-title">카메라 속 공중 유령과 실시간 교감하기</h2>
           <p class="stage-desc">
-            빈집 마당 공중에 둥실둥실 떠있는 수호 유령이 나타났습니다! 유령과 상호작용하여 친밀도를 쌓고 첫 미션을 받아보세요.
+            카메라로 빈집 마당을 비추면 공중에 3D 유령이 나타납니다. **카메라 화면 속 유령을 직접 터치하고 별가루를 선물**해 친밀도를 100%로 채워보세요!
           </p>
 
-          <!-- 3D Ghost AR Viewer -->
-          <div class="ar-scene-container" id="ghost-interactive-box">
+          <!-- Live Camera + 3D Ghost AR Viewport -->
+          <div class="camera-ar-viewport" id="camera-ar-box">
+            <!-- Live Background Video Stream from Real Camera -->
+            <video id="live-camera-video" class="live-camera-video" autoplay playsinline muted></video>
+
+            <!-- 3D Ghost Model Rendering Layer (Transparent Background) -->
             <model-viewer
               id="viewer-stage-2"
+              class="camera-3d-layer"
               src="/real_ghost.glb"
-              alt="빈집 수호 3D 유령 모델"
-              ar
-              ar-modes="webxr scene-viewer quick-look"
+              alt="카메라 속 3D 수호 유령"
               camera-controls
               auto-rotate
-              shadow-intensity="1.5"
+              shadow-intensity="1.2"
               exposure="1.15"
-              ar-placement="wall">
-              <button slot="ar-button" class="ar-overlay-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-                <span>카메라로 공중 유령 띄우기</span>
-              </button>
+              touch-action="pan-y">
             </model-viewer>
 
-            <div class="ghost-interactive-hint">
-              <span>화면 속 유령을 직접 터치해 보세요!</span>
-            </div>
-          </div>
+            <!-- Floating Hearts/Stars Particle Canvas -->
+            <div id="particle-container" class="particle-container"></div>
 
-          <!-- Ghost Affinity & Interaction Controls -->
-          <div class="ghost-interaction-panel">
-            <div class="affinity-header">
-              <span class="affinity-title">유령과의 친밀도</span>
-              <span class="affinity-val" id="affinity-val-text">0%</span>
-            </div>
-            <div class="affinity-track">
-              <div class="affinity-fill" id="affinity-fill-bar" style="width: 0%"></div>
-            </div>
+            <!-- Real-Time Camera HUD Overlay (친밀도 게이지 & 대사) -->
+            <div class="camera-hud-overlay">
+              <!-- Top Affinity Gauge on Camera Screen -->
+              <div class="camera-affinity-hud">
+                <div class="hud-affinity-label">
+                  <span class="heart-pulse">❤️</span>
+                  <span class="hud-title">유령 친밀도</span>
+                  <span class="hud-val" id="cam-affinity-text">0%</span>
+                </div>
+                <div class="hud-affinity-track">
+                  <div class="hud-affinity-fill" id="cam-affinity-fill" style="width: 0%"></div>
+                </div>
+              </div>
 
-            <!-- Interaction Buttons -->
-            <div class="interaction-btn-grid">
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-pet-ghost">
-                <span>👋 유령 톡톡 건드리기</span>
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-feed-ghost">
-                <span>⭐ 별가루 선물하기</span>
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-voice-ghost">
-                <span>🗣️ 목소리 들려주기</span>
-              </button>
-            </div>
-          </div>
+              <!-- Ghost Speech Bubble on Camera Screen -->
+              <div class="camera-ghost-speech-bubble" id="cam-speech-bubble">
+                <span class="ghost-bubble-name">꼬마 유령</span>
+                <p id="cam-speech-text">"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"</p>
+              </div>
 
-          <!-- Character Dialog Box -->
-          <div class="dialogue-box">
-            <div class="dialogue-avatar">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8v12l3-3 3 3 2-2 2 2 3-3 3 3V10a8 8 0 0 0-8-8z"></path><circle cx="9" cy="10" r="1"></circle><circle cx="15" cy="10" r="1"></circle></svg>
-            </div>
-            <div class="dialogue-content">
-              <div class="speaker-name">빈집 수호 꼬마 유령</div>
-              <p class="speaker-text" id="ghost-dialog-text">
-                "안녕! 나는 이 오래된 빈집을 지키고 있는 꼬마 유령이야. 우리 친해지면 우체부 아저씨가 남겨둔 비밀 편지 조각을 줄게!"
-              </p>
+              <!-- Camera Bottom Action Bar (상호작용 버튼) -->
+              <div class="camera-action-controls">
+                <button type="button" class="cam-btn" id="btn-cam-pet">
+                  <span class="cam-btn-icon">👋</span>
+                  <span>톡톡 만지기</span>
+                </button>
+                <button type="button" class="cam-btn" id="btn-cam-feed">
+                  <span class="cam-btn-icon">⭐</span>
+                  <span>별가루 주기</span>
+                </button>
+                <button type="button" class="cam-btn" id="btn-cam-voice">
+                  <span class="cam-btn-icon">🗣️</span>
+                  <span>말 걸기</span>
+                </button>
+              </div>
+
+              <!-- Camera Permission / Retry Button (if camera disabled) -->
+              <button type="button" id="btn-cam-toggle" class="camera-toggle-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span id="cam-toggle-text">실시간 카메라 켜짐</span>
+              </button>
             </div>
           </div>
 
@@ -184,13 +188,13 @@
           <div class="clue-reward-card hidden" id="stage-2-reward">
             <div class="reward-icon">✉️</div>
             <div class="reward-info">
-              <h4>첫 번째 편지 조각 & 퀘스트 부여</h4>
+              <h4>첫 번째 편지 조각 획득 & 퀘스트 수락</h4>
               <p>"친애하는 영희에게... 승평마을의 가을은..."</p>
             </div>
           </div>
 
           <button id="btn-next-stage-2" class="btn btn-primary btn-large" disabled>
-            <span>유령과 친해져서 퀘스트 받기</span>
+            <span>유령과 친해져서 퀘스트 받기 (0%)</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </button>
         </div>

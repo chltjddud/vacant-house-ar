@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ghostAffinity: 0
   };
 
+  let cameraStream = null;
+
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
@@ -37,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const stageTitles = {
     1: '1단계 / 마을 입구',
-    2: '2단계 / 첫 번째 빈집',
+    2: '2단계 / 첫 번째 빈집 (카메라 AR)',
     3: '3단계 / 마을 골목길',
     4: '4단계 / 두 번째 빈집',
     5: '5단계 / 지역 상권 연계',
@@ -46,14 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function updateUI() {
-    // Stage Visibility
     stages.forEach(s => s.classList.remove('active'));
     const currentSection = document.getElementById(`stage-${state.currentStage}`);
     if (currentSection) {
       currentSection.classList.add('active');
     }
 
-    // Stepper Dots
     stepDots.forEach(dot => {
       const stepNum = parseInt(dot.dataset.step, 10);
       dot.classList.remove('active', 'completed');
@@ -64,29 +64,36 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Top Label
     stepperLabel.textContent = stageTitles[state.currentStage] || `${state.currentStage}단계`;
     inventorySummary.textContent = `수집 편지 ${state.collectedLetters}/3 · 스탬프 ${state.hasStamp ? '1개' : '0개'}`;
 
-    // Stage 2 Affinity Restore
-    const affinityValText = document.getElementById('affinity-val-text');
-    const affinityFillBar = document.getElementById('affinity-fill-bar');
+    // Update On-Camera Affinity HUD
+    const camAffinityText = document.getElementById('cam-affinity-text');
+    const camAffinityFill = document.getElementById('cam-affinity-fill');
     const btnNextStage2 = document.getElementById('btn-next-stage-2');
     const stage2Reward = document.getElementById('stage-2-reward');
 
-    if (affinityValText && affinityFillBar) {
-      affinityValText.textContent = `${state.ghostAffinity}%`;
-      affinityFillBar.style.width = `${state.ghostAffinity}%`;
+    if (camAffinityText && camAffinityFill) {
+      camAffinityText.textContent = `${state.ghostAffinity}%`;
+      camAffinityFill.style.width = `${state.ghostAffinity}%`;
     }
 
-    if (state.ghostAffinity >= 100) {
-      if (btnNextStage2) {
+    if (btnNextStage2) {
+      if (state.ghostAffinity >= 100) {
         btnNextStage2.removeAttribute('disabled');
         btnNextStage2.querySelector('span').textContent = '골목길로 이동하여 단서 찾기';
+        if (stage2Reward) stage2Reward.classList.remove('hidden');
+      } else {
+        btnNextStage2.setAttribute('disabled', 'true');
+        btnNextStage2.querySelector('span').textContent = `유령과 친해져서 퀘스트 받기 (${state.ghostAffinity}%)`;
       }
-      if (stage2Reward) {
-        stage2Reward.classList.remove('hidden');
-      }
+    }
+
+    // Camera Management
+    if (state.currentStage === 2) {
+      startLiveCamera();
+    } else {
+      stopLiveCamera();
     }
 
     // Dynamic Branch Content for Stage 5
@@ -142,9 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateMissionPreview() {
     if (state.companion.includes('어린이')) {
-      aiMissionText.textContent = `"${state.companion}과 함께하는 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 공중 수호 유령과 대화를 나누어 보세요."`;
+      aiMissionText.textContent = `"${state.companion}과 함께하는 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 카메라 속 공중 유령을 만나보세요."`;
     } else {
-      aiMissionText.textContent = `"${state.companion}을 위한 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 공중 수호 유령을 만나보세요."`;
+      aiMissionText.textContent = `"${state.companion}을 위한 ${state.theme} 탐험 코스(${state.time})가 생성되었습니다. 첫 번째 빈집으로 이동하여 카메라 속 공중 유령과 대화를 나누어 보세요."`;
     }
   }
 
@@ -153,69 +160,142 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       state.currentStage = 2;
       saveState();
-      playDocent("첫 번째 빈집에 도착했습니다. 공중에 떠있는 수호 유령과 교감하여 첫 퀘스트를 받아보세요.");
+      playDocent("첫 번째 빈집에 도착했습니다. 카메라 화면 속 유령과 교감하여 첫 퀘스트를 받아보세요.");
     });
   }
 
-  // 4. Stage 2 Logic (Interactive 3D Ghost & Quest Assignment)
+  // 4. Stage 2 Logic (LIVE CAMERA AR + ON-CAMERA AFFINITY INTERACTION)
+  const liveCameraVideo = document.getElementById('live-camera-video');
   const viewerStage2 = document.getElementById('viewer-stage-2');
-  const ghostDialogText = document.getElementById('ghost-dialog-text');
-  const btnPetGhost = document.getElementById('btn-pet-ghost');
-  const btnFeedGhost = document.getElementById('btn-feed-ghost');
-  const btnVoiceGhost = document.getElementById('btn-voice-ghost');
+  const camSpeechText = document.getElementById('cam-speech-text');
+  const particleContainer = document.getElementById('particle-container');
+  const btnCamPet = document.getElementById('btn-cam-pet');
+  const btnCamFeed = document.getElementById('btn-cam-feed');
+  const btnCamVoice = document.getElementById('btn-cam-voice');
+  const btnCamToggle = document.getElementById('btn-cam-toggle');
+  const camToggleText = document.getElementById('cam-toggle-text');
   const btnNextStage2 = document.getElementById('btn-next-stage-2');
 
-  function addAffinity(amount, dialogText) {
+  async function startLiveCamera() {
+    if (cameraStream) return;
+    try {
+      const constraints = {
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      };
+      cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (liveCameraVideo) {
+        liveCameraVideo.srcObject = cameraStream;
+        await liveCameraVideo.play();
+        if (camToggleText) camToggleText.textContent = '실시간 카메라 켜짐';
+      }
+    } catch (err) {
+      console.warn('Camera access denied or unavailable:', err);
+      if (camToggleText) camToggleText.textContent = '가상 AR 모드 활성화';
+    }
+  }
+
+  function stopLiveCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream = null;
+    }
+  }
+
+  if (btnCamToggle) {
+    btnCamToggle.addEventListener('click', () => {
+      if (cameraStream) {
+        stopLiveCamera();
+        if (camToggleText) camToggleText.textContent = '카메라 켜기';
+      } else {
+        startLiveCamera();
+      }
+    });
+  }
+
+  // Particle Emitter (Hearts / Stars floating over camera screen)
+  function spawnParticle(emoji) {
+    if (!particleContainer) return;
+    const particle = document.createElement('div');
+    particle.className = 'floating-particle';
+    particle.textContent = emoji;
+    
+    // Random position around center
+    const x = 40 + Math.random() * 20; // 40% ~ 60%
+    const y = 45 + Math.random() * 15; // 45% ~ 60%
+    particle.style.left = `${x}%`;
+    particle.style.top = `${y}%`;
+    
+    particleContainer.appendChild(particle);
+    setTimeout(() => {
+      if (particle.parentNode) {
+        particle.parentNode.removeChild(particle);
+      }
+    }, 1200);
+  }
+
+  function addAffinity(amount, dialogText, emoji = '❤️') {
     state.ghostAffinity = Math.min(100, state.ghostAffinity + amount);
-    if (ghostDialogText) {
-      ghostDialogText.textContent = dialogText;
+    if (camSpeechText) {
+      camSpeechText.textContent = dialogText;
     }
     playDocent(dialogText);
 
-    // Bounce model viewer rotation slightly
+    // Spawn animated floating particles on camera
+    spawnParticle(emoji);
+    spawnParticle(emoji);
+
+    // Jiggle model viewer camera orbit
     if (viewerStage2) {
-      viewerStage2.cameraOrbit = `${Math.random() * 60 - 30}deg 75deg 2.5m`;
+      viewerStage2.cameraOrbit = `${Math.random() * 50 - 25}deg 75deg 2.5m`;
     }
 
     if (state.ghostAffinity >= 100) {
       state.collectedLetters = Math.max(1, state.collectedLetters);
       setTimeout(() => {
-        if (ghostDialogText) {
-          ghostDialogText.textContent = `"와아! 저와 최고의 친구가 되셨어요! 우체부 아저씨가 남겨둔 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!"`;
+        if (camSpeechText) {
+          camSpeechText.textContent = `"와아! 친밀도 100% 달성! 우체부 아저씨의 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!"`;
         }
-        playDocent("와아! 저와 최고의 친구가 되셨어요! 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!");
-      }, 800);
+        playDocent("와아! 친밀도 100% 달성! 첫 번째 편지 조각을 드릴게요. 골목길로 가보세요!");
+        spawnParticle('🎉');
+        spawnParticle('✉️');
+      }, 700);
     }
     saveState();
   }
 
-  // Touch directly on 3D Viewer
+  // Direct Touch on 3D Ghost Viewer Layer
   if (viewerStage2) {
     viewerStage2.addEventListener('click', () => {
-      addAffinity(35, `"간지러워요! 히히~ 저는 50년 동안 이 빈집을 지켜온 꼬마 유령이에요."`);
+      addAffinity(35, `"간지러워요! 히히~ 카메라 너머로 여러분의 손길이 느껴져요!"`, '✨');
     });
   }
 
-  if (btnPetGhost) {
-    btnPetGhost.addEventListener('click', () => {
-      addAffinity(35, `"쓰다듬어주니 마음이 따뜻해져요. 우체부 아저씨의 잃어버린 편지를 찾고 계시죠?"`);
+  // Camera Action Buttons
+  if (btnCamPet) {
+    btnCamPet.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addAffinity(35, `"쓰다듬어주니 기분이 너무 좋아요! 우체부 아저씨의 비밀을 알려드릴게요."`, '❤️');
     });
   }
 
-  if (btnFeedGhost) {
-    btnFeedGhost.addEventListener('click', () => {
-      addAffinity(35, `"달콤한 별가루 선물 정말 고마워요! 영혼의 에너지가 가득 찼어요!"`);
+  if (btnCamFeed) {
+    btnCamFeed.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addAffinity(35, `"달콤한 별가루 선물 정말 고마워요! 영혼의 에너지가 불끈 솟아나요!"`, '⭐');
     });
   }
 
-  if (btnVoiceGhost) {
-    btnVoiceGhost.addEventListener('click', () => {
-      addAffinity(35, `"우리 마을을 찾아온 가족의 따뜻한 목소리가 들려요! 편지의 흔적을 알려드릴게요."`);
+  if (btnCamVoice) {
+    btnCamVoice.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addAffinity(35, `"따뜻한 목소리가 들려요! 편지를 찾아 승평마을을 구해줄 분들이군요!"`, '🗣️');
     });
   }
 
   if (btnNextStage2) {
     btnNextStage2.addEventListener('click', () => {
+      stopLiveCamera();
       state.currentStage = 3;
       saveState();
       playDocent("골목길 바닥을 비춰 우체부의 옛 발자국을 따라가세요.");
@@ -338,6 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnRestartQuest) {
     btnRestartQuest.addEventListener('click', () => {
       if (confirm('퀘스트를 처음부터 다시 시작하시겠습니까? (수집한 편지와 스탬프가 초기화됩니다)')) {
+        stopLiveCamera();
         localStorage.removeItem(STORAGE_KEY);
         state = {
           currentStage: 1,
