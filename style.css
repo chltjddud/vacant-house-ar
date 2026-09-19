@@ -688,7 +688,8 @@ body {
   position: absolute;
   inset: 0;
   z-index: 3;
-  perspective: 700px;
+  perspective: 900px;
+  transform-style: preserve-3d;
   pointer-events: auto;
 }
 
@@ -697,37 +698,105 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform: translate(-50%, -50%) rotateX(45deg);
+  transform: translate(-50%, -50%) rotateX(52deg) translateZ(0);
+  transform-style: preserve-3d;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.8));
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+  filter: drop-shadow(0 6px 18px rgba(245, 158, 11, 0.7));
+}
+
+.ar-footprint-node:hover:not(.locked) {
+  transform: translate(-50%, -55%) rotateX(50deg) translateZ(16px) scale(1.06);
+  filter: drop-shadow(0 10px 24px rgba(245, 158, 11, 0.9));
 }
 
 .ar-footprint-node.locked {
-  opacity: 0.28;
-  filter: grayscale(1);
+  opacity: 0.22;
+  filter: grayscale(1) opacity(0.3);
   pointer-events: none;
 }
 
 .ar-footprint-node.stepped {
-  filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.9));
+  filter: drop-shadow(0 6px 22px rgba(16, 185, 129, 0.95));
 }
 
+.ar-footprint-node.stepped svg path,
 .ar-footprint-node.stepped svg ellipse,
 .ar-footprint-node.stepped svg circle {
   fill: #10b981 !important;
 }
 
-.footprint-graphic {
-  animation: footprintPulse 2s infinite ease-in-out;
+.ar-footprint-node.stepped .footprint-ground-ripple {
+  border-color: rgba(16, 185, 129, 0.7);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.45);
 }
 
-.left-foot { transform: rotate(-8deg); }
-.right-foot { transform: rotate(8deg); }
+.ar-footprint-node.stepped .footprint-marker-badge {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.footprint-graphic {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: footprintPulse 2.4s infinite ease-in-out;
+  transform-style: preserve-3d;
+}
+
+/* 3D ground contact shadow underneath footprint */
+.footprint-ground-shadow {
+  position: absolute;
+  bottom: -2px;
+  width: 48px;
+  height: 14px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  transform: rotateX(65deg);
+}
+
+/* 3D AR Ground Wave expanding ripple */
+.footprint-ground-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 62px;
+  height: 90px;
+  margin-top: -45px;
+  margin-left: -31px;
+  border-radius: 46%;
+  border: 1.5px solid rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: groundRipple 2.2s infinite cubic-bezier(0.1, 0.7, 0.1, 1);
+}
+
+@keyframes groundRipple {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.left-foot { transform: rotate(-6deg); }
+.right-foot { transform: rotate(6deg); }
 
 @keyframes footprintPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.07);
+  }
 }
 
 .footprint-marker-badge {
@@ -738,6 +807,8 @@ body {
   padding: 2px 8px;
   border-radius: 12px;
   margin-top: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 2;
 }
 
 .ar-footprint-node.destination {
