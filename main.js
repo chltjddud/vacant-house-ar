@@ -1,6 +1,10 @@
 import QRCode from 'qrcode';
 
 function initApp() {
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+
   // 1. Quest State & LocalStorage
   const STORAGE_KEY = 'seungpyeong_ar_quest_state_v2';
   let state = {
@@ -531,7 +535,6 @@ function initApp() {
               try { navigator.vibrate([40, 60, 40]); } catch (e) {}
             }
             showGhostSpeech('"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"', 1600);
-            playDocent("카메라 속에서 꼬마 유령을 발견했습니다! 유령과 교감해 보세요.");
           });
         } else {
           // 이미 교감 중인 상태
@@ -630,7 +633,6 @@ function initApp() {
         state.collectedLetters = 0;
         state.currentStage = 2;
         saveState();
-        playDocent("첫 번째 빈집에 도착했습니다. 카메라 화면 속 유령과 교감하여 첫 퀘스트를 받아보세요.");
       });
     });
   }
@@ -712,7 +714,6 @@ function initApp() {
 
     if (camSpeechText) camSpeechText.textContent = currentDialog;
     showGhostSpeech(currentDialog, 1400);
-    playDocent(currentDialog);
 
     spawnParticle(particleContainer2, emoji);
     spawnParticle(particleContainer2, emoji);
@@ -768,7 +769,6 @@ function initApp() {
       stopLiveCamera();
       state.currentStage = 3;
       saveState();
-      playDocent("골목길에 도착했습니다. 발자국 찾기 버튼을 눌러 바닥의 옛 흔적을 찾아보세요.");
     });
   }
 
@@ -793,7 +793,6 @@ function initApp() {
       if (footprintLauncherCard) footprintLauncherCard.classList.add('hidden');
       if (cameraArBox3) cameraArBox3.classList.remove('hidden');
       await startLiveCamera('live-camera-video-3');
-      playDocent("카메라로 바닥을 비추며 황금빛 우체부 발자국을 따라가세요.");
       showFloorHint('"카메라로 바닥을 비추고, 황금빛 발자국을 탭하여 따라가세요!"', 1600);
     });
   }
@@ -814,14 +813,12 @@ function initApp() {
     const clueText = footprintClues[state.footstepProgress - 1];
 
     showFloorHint(clueText, 1400);
-    playDocent(clueText);
 
     if (state.footstepProgress >= 3) {
       state.collectedLetters = Math.max(2, state.collectedLetters);
       saveState();
 
       showFloorHint('"모든 발자국을 찾았습니다! 두 번째 빈집으로 이동합니다..."', 1500);
-      playDocent("우체부의 발자국을 모두 따라왔습니다! 두 번째 빈집으로 이동합니다.");
 
       // Automatically move to Stage 4 after following all footprints
       if (!isAutoTransitioning) {
@@ -832,7 +829,6 @@ function initApp() {
             stopLiveCamera();
             state.currentStage = 4;
             saveState();
-            playDocent("두 번째 빈집에 도착했습니다. 우체부가 향했던 길을 선택해 주세요.");
           }
           isAutoTransitioning = false;
         }, 2000);
@@ -861,7 +857,6 @@ function initApp() {
       stopLiveCamera();
       state.currentStage = 4;
       saveState();
-      playDocent("두 번째 빈집에 도착했습니다. 우체부가 향했던 길을 선택해 주세요.");
     });
   }
 
@@ -876,7 +871,6 @@ function initApp() {
       state.hasStamp = true;
       state.collectedLetters = 3;
       saveState();
-      playDocent("활기찬 전통 오일장 시장 코스로 이동합니다. 제휴 상점 쿠폰이 발급되었습니다.");
     });
   }
 
@@ -887,7 +881,6 @@ function initApp() {
       state.hasStamp = true;
       state.collectedLetters = 3;
       saveState();
-      playDocent("추억의 옛 분교 학교 코스로 이동합니다. 제휴 상점 쿠폰이 발급되었습니다.");
     });
   }
 
@@ -897,7 +890,6 @@ function initApp() {
     btnNextStage5.addEventListener('click', () => {
       state.currentStage = 6;
       saveState();
-      playDocent("마지막 빈집에 도착했습니다. 세 조각의 편지가 하나로 완성됩니다.");
     });
   }
 
@@ -907,7 +899,6 @@ function initApp() {
     btnNextStage6.addEventListener('click', () => {
       state.currentStage = 7;
       saveState();
-      playDocent("축하합니다! 이 빈집의 미래를 위한 시민 투표에 참여해 주세요.");
     });
   }
 
@@ -989,14 +980,10 @@ function initApp() {
     });
   }
 
-  // 12. Speech Synthesis
-  function playDocent(text) {
+  // 12. Voice synthesis removed (AI 음성 비활성화)
+  function playDocent() {
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ko-KR';
-      utterance.rate = 0.95;
-      window.speechSynthesis.speak(utterance);
+      try { window.speechSynthesis.cancel(); } catch (e) {}
     }
   }
 
