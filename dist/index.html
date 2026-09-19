@@ -13,8 +13,8 @@
   
   <!-- Model Viewer Component -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-  <script type="module" crossorigin src="/assets/index-BpclcAhL.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Dmw9dmZ4.css">
+  <script type="module" crossorigin src="/assets/index-lCVxYhrj.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-D8b_GQ2R.css">
 </head>
 <body>
   <div id="app" class="village-quest-app">
@@ -26,6 +26,9 @@
         <h1 class="quest-app-title">잃어버린 편지의 비밀</h1>
       </div>
       <div class="topbar-actions">
+        <button id="btn-theme-toggle" class="btn-icon" title="라이트/다크 테마 전환">
+          <span id="theme-icon">☀️</span>
+        </button>
         <button id="btn-qr-poster" class="btn-icon" title="현장용 QR 코드 생성">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         </button>
@@ -57,7 +60,8 @@
 
       <!-- STAGE 1: 마을 입구 - AI 맞춤 온보딩 -->
       <section id="stage-1" class="quest-stage active">
-        <div class="stage-card">
+        <div class="stage-card" id="stage-1-card">
+          <canvas id="fire-burn-canvas" class="fire-burn-overlay hidden"></canvas>
           <div class="stage-badge">STAGE 1 · 마을 입구</div>
           <h2 class="stage-title">AI 안내 우체부와 함께 떠나는 승평마을 탐험</h2>
           <p class="stage-desc">
@@ -137,6 +141,7 @@
             </model-viewer>
 
             <div id="particle-container-2" class="particle-container"></div>
+            <canvas id="camera-radar-canvas-2" class="camera-radar-overlay"></canvas>
 
             <div class="camera-hud-overlay">
               <div class="camera-affinity-hud">
@@ -216,6 +221,7 @@
           <!-- Live Camera Floor AR Viewport (Revealed upon clicking "발자국 찾기") -->
           <div class="camera-ar-viewport hidden" id="camera-ar-box-3">
             <video id="live-camera-video-3" class="live-camera-video" autoplay playsinline muted></video>
+            <canvas id="camera-radar-canvas-3" class="camera-radar-overlay"></canvas>
 
             <!-- AR Floor Footprint Layer (Perspective SVG overlay on live camera ground) -->
             <div class="ar-floor-plane" id="ar-floor-plane">

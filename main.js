@@ -32,6 +32,29 @@ function initApp() {
     updateUI();
   }
 
+  // Theme Manager (Dark / Light)
+  const THEME_STORAGE_KEY = 'seungpyeong_theme_mode';
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+
+  function applyTheme(mode) {
+    document.documentElement.setAttribute('data-theme', mode);
+    if (themeIcon) {
+      themeIcon.textContent = mode === 'light' ? '🌙' : '☀️';
+    }
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  }
+  applyTheme(savedTheme);
+
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const nextTheme = current === 'light' ? 'dark' : 'light';
+      applyTheme(nextTheme);
+    });
+  }
+
   // 2. Stage Elements
   const stages = document.querySelectorAll('.quest-stage');
   const stepDots = document.querySelectorAll('.step-dot');
@@ -115,6 +138,272 @@ function initApp() {
 
   function hideFloorHint() {
     hideSpeechBubble('floor-hint-bubble');
+  }
+
+  // 3. Retro Ghost Radar HUD Engine (Canvas 2D, 60fps)
+  const activeRadars = {};
+
+  function startRadarHUD(canvasId, targetName = '꼬마 유령', radarColor = '#10b981') {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (activeRadars[canvasId]) return;
+
+    const ctx = canvas.getContext('2d');
+    let animId = null;
+    let scanAngle = 0;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = (rect.width || 380) * dpr;
+      canvas.height = (rect.height || 480) * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+
+    function render() {
+      if (!canvas.offsetParent) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || 380;
+      const h = rect.height || 480;
+      const cx = w / 2;
+      const cy = h / 2;
+      const radarRadius = Math.min(w, h) * 0.38;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+
+      // 1. 코너 브래킷 (Viewfinder Reticle)
+      ctx.strokeStyle = radarColor;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.6;
+      const cornerSize = 20;
+      const pad = 14;
+
+      // 좌상
+      ctx.beginPath();
+      ctx.moveTo(pad, pad + cornerSize); ctx.lineTo(pad, pad); ctx.lineTo(pad + cornerSize, pad);
+      ctx.stroke();
+      // 우상
+      ctx.beginPath();
+      ctx.moveTo(w - pad - cornerSize, pad); ctx.lineTo(w - pad, pad); ctx.lineTo(w - pad, pad + cornerSize);
+      ctx.stroke();
+      // 좌하
+      ctx.beginPath();
+      ctx.moveTo(pad, h - pad - cornerSize); ctx.lineTo(pad, h - pad); ctx.lineTo(pad + cornerSize, h - pad);
+      ctx.stroke();
+      // 우하
+      ctx.beginPath();
+      ctx.moveTo(w - pad - cornerSize, h - pad); ctx.lineTo(w - pad, h - pad); ctx.lineTo(w - pad, h - pad - cornerSize);
+      ctx.stroke();
+
+      // 2. 레이더 동심원 및 가이드선
+      ctx.globalAlpha = 0.16;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radarRadius * 0.35, 0, Math.PI * 2);
+      ctx.arc(cx, cy, radarRadius * 0.7, 0, Math.PI * 2);
+      ctx.arc(cx, cy, radarRadius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx - radarRadius, cy); ctx.lineTo(cx + radarRadius, cy);
+      ctx.moveTo(cx, cy - radarRadius); ctx.lineTo(cx, cy + radarRadius);
+      ctx.stroke();
+
+      // 3. 360도 스위핑 빔
+      scanAngle = (scanAngle + 0.034) % (Math.PI * 2);
+      ctx.globalAlpha = 0.25;
+      const sweepGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radarRadius);
+      sweepGrad.addColorStop(0, radarColor);
+      sweepGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      
+      ctx.fillStyle = sweepGrad;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, radarRadius, scanAngle - 0.45, scanAngle, false);
+      ctx.closePath();
+      ctx.fill();
+
+      // 스위프 리딩 라인
+      ctx.globalAlpha = 0.85;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(scanAngle) * radarRadius, cy + Math.sin(scanAngle) * radarRadius);
+      ctx.stroke();
+
+      // 4. 중앙 타겟 포커스 & 펄스 링
+      const pulse = Math.sin(performance.now() * 0.005) * 3 + 16;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.arc(cx, cy, pulse, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, cy); ctx.lineTo(cx + 4, cy);
+      ctx.moveTo(cx, cy - 4); ctx.lineTo(cx, cy + 4);
+      ctx.stroke();
+
+      // 5. 상단/하단 심령 HUD 데이터
+      ctx.font = '10px "Outfit", monospace';
+      ctx.fillStyle = radarColor;
+      ctx.globalAlpha = 0.9;
+      ctx.textAlign = 'left';
+      const emfVal = (4.1 + Math.sin(performance.now() * 0.003) * 0.5).toFixed(2);
+      ctx.fillText(`EMF: ${emfVal} mG [SPECTRAL LOCK]`, pad + 6, pad + 16);
+      ctx.fillText(`FREQ: 432.8 MHz · RADAR ACTIVE`, pad + 6, pad + 28);
+
+      ctx.textAlign = 'right';
+      ctx.fillText(`[TARGET: ${targetName}]`, w - pad - 6, h - pad - 10);
+
+      ctx.restore();
+      animId = requestAnimationFrame(render);
+    }
+
+    animId = requestAnimationFrame(render);
+    activeRadars[canvasId] = { animId, resize };
+    window.addEventListener('resize', resize);
+  }
+
+  function stopRadarHUD(canvasId) {
+    if (activeRadars[canvasId]) {
+      cancelAnimationFrame(activeRadars[canvasId].animId);
+      window.removeEventListener('resize', activeRadars[canvasId].resize);
+      delete activeRadars[canvasId];
+    }
+    const canvas = document.getElementById(canvasId);
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  // 4. Fire Burn Transition Engine for Stage 1
+  function playFireBurnTransition(card, onComplete) {
+    const canvas = document.getElementById('fire-burn-canvas');
+    if (!canvas || !card) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    const rect = card.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    canvas.classList.remove('hidden');
+    card.classList.add('burning-card');
+
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate([60, 40, 80, 50, 120]); } catch(e) {}
+    }
+
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const maxParticles = 200;
+    const duration = 1250;
+    const startTime = performance.now();
+    let animId = null;
+
+    class FireParticle {
+      constructor() {
+        this.reset(true);
+      }
+      reset(initial = false) {
+        this.x = Math.random() * canvas.width;
+        this.y = initial ? canvas.height - Math.random() * 60 : canvas.height + 5;
+        this.vx = (Math.random() - 0.5) * 3;
+        this.vy = -(Math.random() * 6 + 4);
+        this.size = Math.random() * 22 + 10;
+        this.life = 0;
+        this.maxLife = Math.random() * 35 + 30;
+        this.isEmber = Math.random() < 0.3;
+        if (this.isEmber) {
+          this.size = Math.random() * 3 + 1.5;
+          this.vy = -(Math.random() * 9 + 5);
+          this.vx = (Math.random() - 0.5) * 5;
+          this.maxLife = Math.random() * 50 + 35;
+        }
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.size *= 0.96;
+        this.life++;
+        if (this.life >= this.maxLife || this.size < 0.5) {
+          this.reset();
+        }
+      }
+      draw(ctx) {
+        const progress = this.life / this.maxLife;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        if (this.isEmber) {
+          ctx.fillStyle = progress < 0.4 ? '#ffffff' : (progress < 0.8 ? '#fbbf24' : '#ef4444');
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+          if (progress < 0.25) {
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+            grad.addColorStop(0.3, 'rgba(251, 191, 36, 0.85)');
+            grad.addColorStop(0.8, 'rgba(249, 115, 22, 0.4)');
+            grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+          } else if (progress < 0.6) {
+            grad.addColorStop(0, 'rgba(251, 191, 36, 0.8)');
+            grad.addColorStop(0.5, 'rgba(239, 68, 68, 0.5)');
+            grad.addColorStop(1, 'rgba(185, 28, 28, 0)');
+          } else {
+            grad.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+            grad.addColorStop(0.6, 'rgba(75, 85, 99, 0.15)');
+            grad.addColorStop(1, 'rgba(31, 41, 55, 0)');
+          }
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < maxParticles; i++) {
+      particles.push(new FireParticle());
+    }
+
+    function renderLoop(currentTime) {
+      const elapsed = currentTime - startTime;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const baseGrad = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - 120);
+      const intensity = Math.min(1, elapsed / 300);
+      baseGrad.addColorStop(0, `rgba(249, 115, 22, ${0.75 * intensity})`);
+      baseGrad.addColorStop(0.5, `rgba(239, 68, 68, ${0.4 * intensity})`);
+      baseGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, canvas.height - 120, canvas.width, 120);
+
+      particles.forEach(p => {
+        p.update();
+        p.draw(ctx);
+      });
+
+      if (elapsed < duration) {
+        animId = requestAnimationFrame(renderLoop);
+      } else {
+        cancelAnimationFrame(animId);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.classList.add('hidden');
+        card.classList.remove('burning-card');
+        if (onComplete) onComplete();
+      }
+    }
+
+    animId = requestAnimationFrame(renderLoop);
   }
 
   function updateUI() {
@@ -209,9 +498,10 @@ function initApp() {
       }
     }
 
-    // Camera Management & Stage 2/3 Speech Bubbles
+    // Camera Management & Stage 2/3 Speech Bubbles & Radar HUD
     if (state.currentStage === 2) {
       startLiveCamera('live-camera-video-2');
+      startRadarHUD('camera-radar-canvas-2', '꼬마 유령', '#10b981');
       if (previousStage !== 2) {
         const welcomeText = state.ghostAffinity >= 100
           ? '"우체부 아저씨의 편지 조각을 가지고 골목길로 가보세요!"'
@@ -220,14 +510,17 @@ function initApp() {
       }
     } else {
       hideGhostSpeech();
+      stopRadarHUD('camera-radar-canvas-2');
     }
 
     if (state.currentStage === 3) {
       if (cameraArBox3 && !cameraArBox3.classList.contains('hidden')) {
         startLiveCamera('live-camera-video-3');
+        startRadarHUD('camera-radar-canvas-3', '우체부 발자국', '#f59e0b');
       }
     } else {
       hideFloorHint();
+      stopRadarHUD('camera-radar-canvas-3');
       if (state.currentStage !== 2) {
         stopLiveCamera();
       }
@@ -297,12 +590,15 @@ function initApp() {
   if (onboardingForm) {
     onboardingForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      state.ghostAffinity = 0;
-      state.footstepProgress = 0;
-      state.collectedLetters = 0;
-      state.currentStage = 2;
-      saveState();
-      playDocent("첫 번째 빈집에 도착했습니다. 카메라 화면 속 유령과 교감하여 첫 퀘스트를 받아보세요.");
+      const stageCard = document.getElementById('stage-1-card');
+      playFireBurnTransition(stageCard, () => {
+        state.ghostAffinity = 0;
+        state.footstepProgress = 0;
+        state.collectedLetters = 0;
+        state.currentStage = 2;
+        saveState();
+        playDocent("첫 번째 빈집에 도착했습니다. 카메라 화면 속 유령과 교감하여 첫 퀘스트를 받아보세요.");
+      });
     });
   }
 
@@ -464,6 +760,7 @@ function initApp() {
       if (footprintLauncherCard) footprintLauncherCard.classList.add('hidden');
       if (cameraArBox3) cameraArBox3.classList.remove('hidden');
       await startLiveCamera('live-camera-video-3');
+      startRadarHUD('camera-radar-canvas-3', '우체부 발자국', '#f59e0b');
       playDocent("카메라로 바닥을 비추며 황금빛 우체부 발자국을 따라가세요.");
       showFloorHint('"카메라로 바닥을 비추고, 황금빛 발자국을 탭하여 따라가세요!"', 1600);
     });
@@ -500,6 +797,7 @@ function initApp() {
         setTimeout(() => {
           if (state.currentStage === 3) {
             hideFloorHint();
+            stopRadarHUD('camera-radar-canvas-3');
             stopLiveCamera();
             state.currentStage = 4;
             saveState();

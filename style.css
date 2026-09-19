@@ -16,6 +16,15 @@
   --font-serif: 'Song Myung', serif;
 }
 
+[data-theme="light"] {
+  --bg-main: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.94);
+  --border-color: rgba(15, 23, 42, 0.12);
+  --text-main: #0f172a;
+  --text-sub: #475569;
+  --text-muted: #64748b;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -32,6 +41,89 @@ body {
   color: var(--text-main);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="light"] body {
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.06) 0%, transparent 40%);
+}
+
+[data-theme="light"] .stage-card {
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.07);
+}
+
+[data-theme="light"] .chip {
+  background: rgba(241, 245, 249, 0.85);
+  color: #334155;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .chip:hover {
+  background: rgba(226, 232, 240, 0.95);
+}
+
+[data-theme="light"] .chip.active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: var(--accent-teal);
+  color: #065f46;
+}
+
+[data-theme="light"] .mission-preview-box {
+  background: rgba(241, 245, 249, 0.85);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .quest-topbar {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .quest-stepper-container {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .btn-icon {
+  background: rgba(241, 245, 249, 0.85);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #334155;
+}
+
+[data-theme="light"] .btn-icon:hover {
+  background: rgba(226, 232, 240, 0.95);
+  color: #0f172a;
+}
+
+[data-theme="light"] .step-dot {
+  background: rgba(226, 232, 240, 0.9);
+  color: #64748b;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+[data-theme="light"] .step-dot.active {
+  background: var(--accent-teal);
+  color: #ffffff;
+}
+
+[data-theme="light"] .step-dot.completed {
+  background: #059669;
+  color: #ffffff;
+}
+
+[data-theme="light"] .stage-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065f46;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .modal-card {
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+}
+
+[data-theme="light"] .input-field {
+  background: rgba(241, 245, 249, 0.9);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.15);
 }
 
 .village-quest-app {
@@ -1114,3 +1206,57 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* Camera Radar Canvas Overlay */
+.camera-radar-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Stage Card base for overlays */
+.stage-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fire Burn Transition for Stage 1 */
+.fire-burn-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  border-radius: var(--radius-lg);
+}
+
+.burning-card {
+  animation: cardBurnDissolve 1.25s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes cardBurnDissolve {
+  0% {
+    filter: brightness(1) drop-shadow(0 0 0 rgba(249, 115, 22, 0));
+    transform: scale(1);
+    opacity: 1;
+  }
+  30% {
+    filter: brightness(1.3) drop-shadow(0 -10px 30px rgba(249, 115, 22, 0.9)) drop-shadow(0 0 50px rgba(239, 68, 68, 0.7));
+    transform: scale(1.02);
+  }
+  75% {
+    filter: brightness(1.7) contrast(1.4) drop-shadow(0 -25px 60px rgba(234, 88, 12, 1)) drop-shadow(0 0 80px rgba(220, 38, 38, 0.9));
+    opacity: 0.8;
+    transform: scale(0.97) translateY(-6px);
+  }
+  100% {
+    filter: brightness(2.2) contrast(2) drop-shadow(0 -40px 100px rgba(249, 115, 22, 1));
+    opacity: 0;
+    transform: scale(0.9) translateY(-16px);
+  }
+}
