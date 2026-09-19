@@ -616,31 +616,70 @@ body {
 
 /* Camera Speech Bubble */
 .camera-ghost-speech-bubble {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.88);
   backdrop-filter: blur(10px);
   border: 1px solid var(--accent-teal);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
-  margin: 0 auto;
-  width: 92%;
-  max-width: 420px;
+  padding: 8px 14px;
+  margin: 6px auto auto auto;
+  width: 90%;
+  max-width: 400px;
   pointer-events: auto;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
   text-align: center;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  opacity: 1;
+  transform: translateY(0);
+  cursor: pointer;
+}
+
+.camera-ghost-speech-bubble.bubble-hidden {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.ghost-bubble-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
 }
 
 .ghost-bubble-name {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--accent-teal);
-  display: block;
-  margin-bottom: 2px;
+  display: inline-block;
+}
+
+#floor-hint-bubble {
+  border-color: var(--accent-amber);
+}
+
+#floor-hint-bubble .ghost-bubble-name {
+  color: var(--accent-amber);
+}
+
+.ghost-bubble-close {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  padding: 0 4px;
+}
+
+.ghost-bubble-close:hover {
+  opacity: 1;
+  color: #ffffff;
 }
 
 .camera-ghost-speech-bubble p {
   font-size: 0.82rem;
   line-height: 1.4;
   color: #f8fafc;
+  margin: 0;
 }
 
 /* Camera Bottom Action Controls */

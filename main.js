@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   // 1. Quest State & LocalStorage
   const STORAGE_KEY = 'seungpyeong_ar_quest_state_v2';
   let state = {
@@ -48,6 +48,75 @@ document.addEventListener('DOMContentLoaded', () => {
     7: '7단계 / 에필로그 & 미래'
   };
 
+  let previousStage = null;
+  const speechBubbleTimers = {};
+
+  function showSpeechBubble(bubbleId, textId, text, duration = 1500) {
+    const bubble = document.getElementById(bubbleId);
+    const textEl = textId ? document.getElementById(textId) : null;
+    if (!bubble) return;
+
+    if (textEl && text) {
+      textEl.textContent = text;
+    }
+
+    if (speechBubbleTimers[bubbleId]) {
+      clearTimeout(speechBubbleTimers[bubbleId]);
+      delete speechBubbleTimers[bubbleId];
+    }
+
+    // 완전히 display 보장 후 트랜지션 실행
+    bubble.classList.remove('hidden');
+    bubble.style.display = 'block';
+
+    requestAnimationFrame(() => {
+      bubble.style.opacity = '1';
+      bubble.style.transform = 'translateY(0)';
+      bubble.style.pointerEvents = 'auto';
+    });
+
+    if (duration > 0) {
+      speechBubbleTimers[bubbleId] = setTimeout(() => {
+        hideSpeechBubble(bubbleId);
+      }, duration);
+    }
+  }
+
+  function hideSpeechBubble(bubbleId) {
+    const bubble = document.getElementById(bubbleId);
+    if (!bubble) return;
+
+    if (speechBubbleTimers[bubbleId]) {
+      clearTimeout(speechBubbleTimers[bubbleId]);
+      delete speechBubbleTimers[bubbleId];
+    }
+
+    bubble.style.opacity = '0';
+    bubble.style.transform = 'translateY(-8px)';
+    bubble.style.pointerEvents = 'none';
+
+    setTimeout(() => {
+      bubble.classList.add('hidden');
+      bubble.style.display = 'none';
+    }, 260);
+  }
+
+  function showGhostSpeech(text, duration = 1500) {
+    showSpeechBubble('cam-speech-bubble', 'cam-speech-text', text, duration);
+  }
+
+  function hideGhostSpeech() {
+    hideSpeechBubble('cam-speech-bubble');
+  }
+
+  function showFloorHint(text, duration = 1500) {
+    showSpeechBubble('floor-hint-bubble', 'floor-hint-text', text, duration);
+  }
+
+  function hideFloorHint() {
+    hideSpeechBubble('floor-hint-bubble');
+  }
+
   function updateUI() {
     stages.forEach(s => s.classList.remove('active'));
     const currentSection = document.getElementById(`stage-${state.currentStage}`);
@@ -73,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const camAffinityFill = document.getElementById('cam-affinity-fill');
     const btnNextStage2 = document.getElementById('btn-next-stage-2');
     const stage2Reward = document.getElementById('stage-2-reward');
-    const camSpeechTextEl = document.getElementById('cam-speech-text');
 
     if (camAffinityText && camAffinityFill) {
       camAffinityText.textContent = `${state.ghostAffinity}%`;
@@ -89,9 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnNextStage2.setAttribute('disabled', 'true');
         btnNextStage2.querySelector('span').textContent = `유령과 친해져서 퀘스트 받기 (${state.ghostAffinity}%)`;
         if (stage2Reward) stage2Reward.classList.add('hidden');
-        if (camSpeechTextEl && state.ghostAffinity === 0) {
-          camSpeechTextEl.textContent = '"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"';
-        }
       }
     }
 
@@ -144,17 +209,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Camera Management
+    // Camera Management & Stage 2/3 Speech Bubbles
     if (state.currentStage === 2) {
       startLiveCamera('live-camera-video-2');
-    } else if (state.currentStage === 3) {
-      // In Stage 3, if camera viewport is already revealed, keep camera alive
+      if (previousStage !== 2) {
+        const welcomeText = state.ghostAffinity >= 100
+          ? '"우체부 아저씨의 편지 조각을 가지고 골목길로 가보세요!"'
+          : '"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"';
+        showGhostSpeech(welcomeText, 1600);
+      }
+    } else {
+      hideGhostSpeech();
+    }
+
+    if (state.currentStage === 3) {
       if (cameraArBox3 && !cameraArBox3.classList.contains('hidden')) {
         startLiveCamera('live-camera-video-3');
       }
     } else {
-      stopLiveCamera();
+      hideFloorHint();
+      if (state.currentStage !== 2) {
+        stopLiveCamera();
+      }
     }
+
+    previousStage = state.currentStage;
 
     // Dynamic Branch Content for Stage 5
     const stage5Title = document.getElementById('stage-5-title');
@@ -303,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (camSpeechText) camSpeechText.textContent = currentDialog;
+    showGhostSpeech(currentDialog, 1400);
     playDocent(currentDialog);
 
     spawnParticle(particleContainer2, emoji);
@@ -318,6 +398,13 @@ document.addEventListener('DOMContentLoaded', () => {
       spawnParticle(particleContainer2, '✉️');
     }
     saveState();
+  }
+
+  const camSpeechBubble = document.getElementById('cam-speech-bubble');
+  if (camSpeechBubble) {
+    camSpeechBubble.addEventListener('click', () => {
+      hideGhostSpeech();
+    });
   }
 
   if (viewerStage2) {
@@ -364,6 +451,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const footprintLauncherCard = document.getElementById('footprint-launcher-card');
   const cameraArBox3 = document.getElementById('camera-ar-box-3');
 
+  const floorHintBubble = document.getElementById('floor-hint-bubble');
+  if (floorHintBubble) {
+    floorHintBubble.addEventListener('click', () => {
+      hideFloorHint();
+    });
+  }
+
   // "발자국 찾기" (카메라 켜기) 버튼 클릭 핸들러
   if (btnStartFootprintCam) {
     btnStartFootprintCam.addEventListener('click', async () => {
@@ -371,6 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cameraArBox3) cameraArBox3.classList.remove('hidden');
       await startLiveCamera('live-camera-video-3');
       playDocent("카메라로 바닥을 비추며 황금빛 우체부 발자국을 따라가세요.");
+      showFloorHint('"카메라로 바닥을 비추고, 황금빛 발자국을 탭하여 따라가세요!"', 1600);
     });
   }
 
@@ -389,16 +484,14 @@ document.addEventListener('DOMContentLoaded', () => {
     state.footstepProgress = Math.min(3, state.footstepProgress + 1);
     const clueText = footprintClues[state.footstepProgress - 1];
 
-    if (floorHintText) floorHintText.textContent = clueText;
+    showFloorHint(clueText, 1400);
     playDocent(clueText);
 
     if (state.footstepProgress >= 3) {
       state.collectedLetters = Math.max(2, state.collectedLetters);
       saveState();
 
-      if (floorHintText) {
-        floorHintText.textContent = `"모든 발자국을 찾았습니다! 두 번째 빈집으로 이동합니다..."`;
-      }
+      showFloorHint('"모든 발자국을 찾았습니다! 두 번째 빈집으로 이동합니다..."', 1500);
       playDocent("우체부의 발자국을 모두 따라왔습니다! 두 번째 빈집으로 이동합니다.");
 
       // Automatically move to Stage 4 after following all footprints
@@ -406,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isAutoTransitioning = true;
         setTimeout(() => {
           if (state.currentStage === 3) {
+            hideFloorHint();
             stopLiveCamera();
             state.currentStage = 4;
             saveState();
@@ -635,4 +729,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Load
   updateUI();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

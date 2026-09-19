@@ -13,8 +13,8 @@
   
   <!-- Model Viewer Component -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-  <script type="module" crossorigin src="/assets/index-D5-lC6K_.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CPrTnYzH.css">
+  <script type="module" crossorigin src="/assets/index-BpclcAhL.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Dmw9dmZ4.css">
 </head>
 <body>
   <div id="app" class="village-quest-app">
@@ -150,8 +150,11 @@
                 </div>
               </div>
 
-              <div class="camera-ghost-speech-bubble" id="cam-speech-bubble">
-                <span class="ghost-bubble-name">꼬마 유령</span>
+              <div class="camera-ghost-speech-bubble hidden" id="cam-speech-bubble" style="display: none;" title="터치하여 닫기">
+                <div class="ghost-bubble-header">
+                  <span class="ghost-bubble-name">꼬마 유령</span>
+                  <span class="ghost-bubble-close" aria-label="닫기">✕</span>
+                </div>
                 <p id="cam-speech-text">"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"</p>
               </div>
 
@@ -282,8 +285,11 @@
               </div>
 
               <!-- Floor Clue Hint Card Popup on Camera -->
-              <div class="camera-ghost-speech-bubble" id="floor-hint-bubble">
-                <span class="ghost-bubble-name">바닥 단서 레이더</span>
+              <div class="camera-ghost-speech-bubble hidden" id="floor-hint-bubble" style="display: none;" title="터치하여 닫기">
+                <div class="ghost-bubble-header">
+                  <span class="ghost-bubble-name">바닥 단서 레이더</span>
+                  <span class="ghost-bubble-close" aria-label="닫기">✕</span>
+                </div>
                 <p id="floor-hint-text">"카메라로 바닥을 비추고, 황금빛 발자국을 탭하여 따라가세요!"</p>
               </div>
 
