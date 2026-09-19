@@ -810,15 +810,11 @@ function initApp() {
     if (state.footstepProgress >= 3) return;
 
     state.footstepProgress = Math.min(3, state.footstepProgress + 1);
-    const clueText = footprintClues[state.footstepProgress - 1];
-
-    showFloorHint(clueText, 1400);
+    hideFloorHint();
 
     if (state.footstepProgress >= 3) {
       state.collectedLetters = Math.max(2, state.collectedLetters);
       saveState();
-
-      showFloorHint('"모든 발자국을 찾았습니다! 두 번째 빈집으로 이동합니다..."', 1500);
 
       // Automatically move to Stage 4 after following all footprints
       if (!isAutoTransitioning) {
@@ -831,7 +827,7 @@ function initApp() {
             saveState();
           }
           isAutoTransitioning = false;
-        }, 2000);
+        }, 1500);
       }
     } else {
       saveState();
