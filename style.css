@@ -117,13 +117,141 @@ body {
 }
 
 [data-theme="light"] .modal-card {
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .modal-card h2 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .modal-intro {
+  color: #475569;
+}
+
+[data-theme="light"] .poster-preset-box label {
+  color: #334155;
+}
+
+[data-theme="light"] .close-btn {
+  color: #64748b;
+}
+
+[data-theme="light"] .close-btn:hover {
+  color: #0f172a;
 }
 
 [data-theme="light"] .input-field {
   background: rgba(241, 245, 249, 0.9);
   color: #0f172a;
   border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] .quest-app-title {
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .current-step-label {
+  color: #059669;
+}
+
+[data-theme="light"] .inventory-status {
+  color: #475569;
+}
+
+[data-theme="light"] .form-group label {
+  color: #334155;
+}
+
+[data-theme="light"] .preview-text {
+  color: #0f172a;
+}
+
+[data-theme="light"] .stage-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .stage-desc {
+  color: #334155;
+}
+
+[data-theme="light"] .btn-secondary {
+  background: rgba(241, 245, 249, 0.9);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background: rgba(226, 232, 240, 0.95);
+}
+
+[data-theme="light"] .footprint-launcher-card {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .footprint-launcher-card h3 {
+  color: #b45309;
+}
+
+[data-theme="light"] .footprint-launcher-card p {
+  color: #334155;
+}
+
+[data-theme="light"] .clue-reward-card {
+  background: rgba(254, 243, 199, 0.65);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+[data-theme="light"] .reward-info h4 {
+  color: #92400e;
+}
+
+[data-theme="light"] .reward-info p {
+  color: #334155;
+}
+
+[data-theme="light"] .branch-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="light"] .branch-info h3 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .branch-info p {
+  color: #475569;
+}
+
+[data-theme="light"] .vote-option-btn {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .vote-text strong {
+  color: #0f172a;
+}
+
+[data-theme="light"] .vote-text p {
+  color: #475569;
+}
+
+[data-theme="light"] .chart-container {
+  background: rgba(241, 245, 249, 0.85);
+}
+
+[data-theme="light"] .bar-label {
+  color: #334155;
+}
+
+[data-theme="light"] .bar-track {
+  background: rgba(15, 23, 42, 0.08);
 }
 
 .village-quest-app {
@@ -467,6 +595,14 @@ body {
   --poster-color: transparent;
   background-color: transparent;
   pointer-events: auto;
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(1) translateY(0);
+}
+
+.camera-3d-layer.ghost-hidden {
+  opacity: 0;
+  transform: scale(0.6) translateY(24px);
+  pointer-events: none;
 }
 
 .particle-container {

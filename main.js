@@ -34,7 +34,7 @@ function initApp() {
 
   // Theme Manager (Dark / Light)
   const THEME_STORAGE_KEY = 'seungpyeong_theme_mode';
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
   const btnThemeToggle = document.getElementById('btn-theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
 
@@ -143,14 +143,19 @@ function initApp() {
   // 3. Retro Ghost Radar HUD Engine (Canvas 2D, 60fps)
   const activeRadars = {};
 
-  function startRadarHUD(canvasId, targetName = '꼬마 유령', radarColor = '#10b981') {
+  function startRadarHUD(canvasId, targetName = '꼬마 유령', radarColor = '#10b981', onComplete = null) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
-    if (activeRadars[canvasId]) return;
+    if (activeRadars[canvasId]) {
+      stopRadarHUD(canvasId);
+    }
 
     const ctx = canvas.getContext('2d');
     let animId = null;
     let scanAngle = 0;
+    let totalRotated = 0;
+    const rotationSpeed = 0.045; // 약 1.5초 동안 정확히 1회전 (360도)
+    const targetRotation = Math.PI * 2;
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
@@ -180,7 +185,7 @@ function initApp() {
       // 1. 코너 브래킷 (Viewfinder Reticle)
       ctx.strokeStyle = radarColor;
       ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.6;
+      ctx.globalAlpha = 0.65;
       const cornerSize = 20;
       const pad = 14;
 
@@ -202,7 +207,7 @@ function initApp() {
       ctx.stroke();
 
       // 2. 레이더 동심원 및 가이드선
-      ctx.globalAlpha = 0.16;
+      ctx.globalAlpha = 0.18;
       ctx.beginPath();
       ctx.arc(cx, cy, radarRadius * 0.35, 0, Math.PI * 2);
       ctx.arc(cx, cy, radarRadius * 0.7, 0, Math.PI * 2);
@@ -215,8 +220,10 @@ function initApp() {
       ctx.stroke();
 
       // 3. 360도 스위핑 빔
-      scanAngle = (scanAngle + 0.034) % (Math.PI * 2);
-      ctx.globalAlpha = 0.25;
+      scanAngle = (scanAngle + rotationSpeed) % (Math.PI * 2);
+      totalRotated += rotationSpeed;
+
+      ctx.globalAlpha = 0.3;
       const sweepGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radarRadius);
       sweepGrad.addColorStop(0, radarColor);
       sweepGrad.addColorStop(1, 'rgba(0,0,0,0)');
@@ -229,7 +236,7 @@ function initApp() {
       ctx.fill();
 
       // 스위프 리딩 라인
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = 0.9;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -238,7 +245,7 @@ function initApp() {
 
       // 4. 중앙 타겟 포커스 & 펄스 링
       const pulse = Math.sin(performance.now() * 0.005) * 3 + 16;
-      ctx.globalAlpha = 0.7;
+      ctx.globalAlpha = 0.75;
       ctx.beginPath();
       ctx.arc(cx, cy, pulse, 0, Math.PI * 2);
       ctx.stroke();
@@ -251,16 +258,26 @@ function initApp() {
       // 5. 상단/하단 심령 HUD 데이터
       ctx.font = '10px "Outfit", monospace';
       ctx.fillStyle = radarColor;
-      ctx.globalAlpha = 0.9;
+      ctx.globalAlpha = 0.95;
       ctx.textAlign = 'left';
-      const emfVal = (4.1 + Math.sin(performance.now() * 0.003) * 0.5).toFixed(2);
-      ctx.fillText(`EMF: ${emfVal} mG [SPECTRAL LOCK]`, pad + 6, pad + 16);
-      ctx.fillText(`FREQ: 432.8 MHz · RADAR ACTIVE`, pad + 6, pad + 28);
+      const isFinishing = totalRotated >= targetRotation * 0.85;
+      const statusText = isFinishing ? '[ENTITY LOCKED!]' : '[SCANNING SPECTRAL ENTITY...]';
+      const emfVal = (4.2 + Math.sin(performance.now() * 0.004) * 0.5).toFixed(2);
+      ctx.fillText(`EMF: ${emfVal} mG ${statusText}`, pad + 6, pad + 16);
+      ctx.fillText(`FREQ: 432.8 MHz · RADAR SWEEP`, pad + 6, pad + 28);
 
       ctx.textAlign = 'right';
-      ctx.fillText(`[TARGET: ${targetName}]`, w - pad - 6, h - pad - 10);
+      ctx.fillText(`[DETECTING: ${targetName}]`, w - pad - 6, h - pad - 10);
 
       ctx.restore();
+
+      // 1바퀴 회전 완료 검사
+      if (totalRotated >= targetRotation) {
+        stopRadarHUD(canvasId);
+        if (onComplete) onComplete();
+        return;
+      }
+
       animId = requestAnimationFrame(render);
     }
 
@@ -498,15 +515,33 @@ function initApp() {
       }
     }
 
-    // Camera Management & Stage 2/3 Speech Bubbles & Radar HUD
+    // Camera Management & Stage 2 Ghost Discovery Radar
     if (state.currentStage === 2) {
       startLiveCamera('live-camera-video-2');
-      startRadarHUD('camera-radar-canvas-2', '꼬마 유령', '#10b981');
       if (previousStage !== 2) {
-        const welcomeText = state.ghostAffinity >= 100
-          ? '"우체부 아저씨의 편지 조각을 가지고 골목길로 가보세요!"'
-          : '"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"';
-        showGhostSpeech(welcomeText, 1600);
+        const viewer2 = document.getElementById('viewer-stage-2');
+        if (state.ghostAffinity === 0) {
+          // 처음 진입: 유령 숨김 상태에서 심령 레이더가 1바퀴 스캔 후 유령 짠 등장!
+          if (viewer2) viewer2.classList.add('ghost-hidden');
+          startRadarHUD('camera-radar-canvas-2', '꼬마 유령', '#10b981', () => {
+            if (viewer2) viewer2.classList.remove('ghost-hidden');
+            spawnParticle(particleContainer2, '✨');
+            spawnParticle(particleContainer2, '🎉');
+            if ('vibrate' in navigator) {
+              try { navigator.vibrate([40, 60, 40]); } catch (e) {}
+            }
+            showGhostSpeech('"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"', 1600);
+            playDocent("카메라 속에서 꼬마 유령을 발견했습니다! 유령과 교감해 보세요.");
+          });
+        } else {
+          // 이미 교감 중인 상태
+          if (viewer2) viewer2.classList.remove('ghost-hidden');
+          stopRadarHUD('camera-radar-canvas-2');
+          const welcomeText = state.ghostAffinity >= 100
+            ? '"우체부 아저씨의 편지 조각을 가지고 골목길로 가보세요!"'
+            : '"안녕! 카메라 속 나를 톡톡 만져보거나 아래 버튼으로 놀아줘!"';
+          showGhostSpeech(welcomeText, 1600);
+        }
       }
     } else {
       hideGhostSpeech();
@@ -516,11 +551,9 @@ function initApp() {
     if (state.currentStage === 3) {
       if (cameraArBox3 && !cameraArBox3.classList.contains('hidden')) {
         startLiveCamera('live-camera-video-3');
-        startRadarHUD('camera-radar-canvas-3', '우체부 발자국', '#f59e0b');
       }
     } else {
       hideFloorHint();
-      stopRadarHUD('camera-radar-canvas-3');
       if (state.currentStage !== 2) {
         stopLiveCamera();
       }
@@ -760,7 +793,6 @@ function initApp() {
       if (footprintLauncherCard) footprintLauncherCard.classList.add('hidden');
       if (cameraArBox3) cameraArBox3.classList.remove('hidden');
       await startLiveCamera('live-camera-video-3');
-      startRadarHUD('camera-radar-canvas-3', '우체부 발자국', '#f59e0b');
       playDocent("카메라로 바닥을 비추며 황금빛 우체부 발자국을 따라가세요.");
       showFloorHint('"카메라로 바닥을 비추고, 황금빛 발자국을 탭하여 따라가세요!"', 1600);
     });
@@ -797,7 +829,6 @@ function initApp() {
         setTimeout(() => {
           if (state.currentStage === 3) {
             hideFloorHint();
-            stopRadarHUD('camera-radar-canvas-3');
             stopLiveCamera();
             state.currentStage = 4;
             saveState();
